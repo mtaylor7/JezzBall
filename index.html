@@ -11,6 +11,7 @@ body {
 
 </style>
 <script src="http://d3js.org/d3.v3.min.js"></script>
+<div id="chart"></div>
 <script>
 
 var w = 960,
@@ -23,7 +24,7 @@ var force = d3.layout.force()
     .friction(1)
     .size([w, h]);
 
-var svg = d3.select("body").append("svg:svg")
+var svg = d3.select("#chart").append("svg:svg")
     .attr("width", w)
     .attr("height", h);
 
