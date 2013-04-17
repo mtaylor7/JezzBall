@@ -66,25 +66,21 @@ force.on("tick", function() {
   force.resume();
 });
 
+function pushNode(node) {
+  svg.append("svg:circle")
+      .data([node])
+      .attr("class", "node")
+      .attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; })
+      .attr("r", r);
+  force.nodes().push(node);
+}
+
 var node1 = {x: (w / 2), y: (h / 2), px: (w / 2 - 5), py: (h / 2 - 5)},
     node2 = {x: (w / 2), y: (h / 2), px: (w / 2 + 5), py: (h / 2 + 5)};
 
-svg.append("svg:circle")
-    .data([node1])
-    .attr("class", "node")
-    .attr("cx", function(d) { return d.x; })
-    .attr("cy", function(d) { return d.y; })
-    .attr("r", r)
-
-svg.append("svg:circle")
-    .data([node2])
-    .attr("class", "node")
-    .attr("cx", function(d) { return d.x; })
-    .attr("cy", function(d) { return d.y; })
-    .attr("r", r)
-
-force.nodes().push(node1);
-force.nodes().push(node2);
+pushNode(node1);
+pushNode(node2);
 force.start();
 
 </script>
