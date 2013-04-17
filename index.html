@@ -43,7 +43,7 @@ force.on("tick", function() {
                       var dx = d.px - d.x;
                       var max = w - r;
                       if (d.x < r) {
-                          d.x = r + (d.x + r);
+                          d.x = r + (r - d.x);
                           d.px = d.x - dx;
                       } else if (d.x > max) {
                           d.x = max - (d.x - max);
@@ -55,7 +55,7 @@ force.on("tick", function() {
                       var dy = d.py - d.y;
                       var max = h - r;
                       if (d.y < r) {
-                          d.y = r + (d.y + r);
+                          d.y = r + (r - d.y);
                           d.py = d.y - dy;
                       } else if (d.y > max) {
                           d.y = max - (d.y - max);
@@ -76,8 +76,8 @@ function pushNode(node) {
   force.nodes().push(node);
 }
 
-var node1 = {x: (w / 2), y: (h / 2), px: (w / 2 - 5), py: (h / 2 - 5)},
-    node2 = {x: (w / 2), y: (h / 2), px: (w / 2 + 5), py: (h / 2 + 5)};
+var node1 = {x: (w / 2), y: (h / 2), px: (w / 2 - 2), py: (h / 2 - 2)},
+    node2 = {x: (w / 2), y: (h / 2), px: (w / 2 + 2), py: (h / 2 + 2)};
 
 pushNode(node1);
 pushNode(node2);
