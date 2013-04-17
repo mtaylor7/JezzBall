@@ -1,9 +1,5 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
-    <title>Force Layouts - Position Verlet</title>
-    <script src="http://d3js.org/d3.v3.min.js"></script>
 <style>
 
 body {
@@ -19,12 +15,9 @@ rect {
 }
 
 </style>
-
-  </head>
-
-  <body>
-      <div id="chart"></div>
-    <script type="text/javascript">
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<div id="chart"></div>
+<script type="text/javascript">
 
 var w = 960,
     h = 500,
@@ -94,7 +87,4 @@ force.nodes().push(node1);
 force.nodes().push(node2);
 force.start();
 
-    </script>
-    <script type="text/javascript" src="hijs/hi.js"></script>
-  </body>
-</html>
+</script>
