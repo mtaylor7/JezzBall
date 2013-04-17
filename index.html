@@ -18,8 +18,8 @@ var w = 960,
     r = 6;
 
 var force = d3.layout.force()
-    .gravity(.001)
-    .charge(.001)
+    .gravity(0)
+    .charge(0)
     .friction(1)
     .size([w, h]);
 
