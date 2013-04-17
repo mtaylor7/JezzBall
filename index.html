@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  width: 960px;
+  height: 500px;
+  position: relative;
+}
+
+</style>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var w = 1280,
+    h = 800,
+    r = 6;
+
+var force = d3.layout.force()
+    .gravity(.001)
+    .charge(.001)
+    .friction(1)
+    .size([w, h]);
+
+var svg = d3.select("#chart").append("svg:svg")
+    .attr("width", w)
+    .attr("height", h);
+
+svg.append("svg:rect")
+    .attr("width", w)
+    .attr("height", h);
+
+force.on("tick", function() {
+  svg.selectAll("circle")
+      .attr("cx", function(d) {
+                      var dx = d.px - d.x;
+                      var max = w - r;
+                      if (d.x < r) {
+                          d.x = r + (d.x + r);
+                          d.px = d.x - dx;
+                      } else if (d.x > max) {
+                          d.x = max - (d.x - max);
+                          d.px = d.x - dx;
+                      }
+                      return d.x;
+                  })
+      .attr("cy", function(d) {
+                      var dy = d.py - d.y;
+                      var max = h - r;
+                      if (d.y < r) {
+                          d.y = r + (d.y + r);
+                          d.py = d.y - dy;
+                      } else if (d.y > max) {
+                          d.y = max - (d.y - max);
+                          d.py = d.y - dy;
+                      }
+                      return d.y;
+                  })
+  force.resume();
+});
+
+var node1 = {x: (w / 2), y: (h / 2), px: (w / 2 - 5), py: (h / 2 - 5)},
+    node2 = {x: (w / 2), y: (h / 2), px: (w / 2 + 5), py: (h / 2 + 5)};
+
+svg.append("svg:circle")
+    .data([node1])
+    .attr("class", "node")
+    .attr("cx", function(d) { return d.x; })
+    .attr("cy", function(d) { return d.y; })
+    .attr("r", r)
+
+svg.append("svg:circle")
+    .data([node2])
+    .attr("class", "node")
+    .attr("cx", function(d) { return d.x; })
+    .attr("cy", function(d) { return d.y; })
+    .attr("r", r)
+
+
+force.nodes().push(node1);
+force.nodes().push(node2);
+force.start();
+
+</script>
