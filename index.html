@@ -1,5 +1,10 @@
+
 <!DOCTYPE html>
-<meta charset="utf-8">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+    <title>Force Layouts - Position Verlet</title>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
 <style>
 
 body {
@@ -9,10 +14,18 @@ body {
   position: relative;
 }
 
+rect {
+  fill: none;
+  pointer-events: all;
+}
+
 </style>
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<div id="chart"></div>
-<script>
+
+  </head>
+
+  <body>
+      <div id="chart"></div>
+    <script type="text/javascript">
 
 var w = 960,
     h = 500,
@@ -64,23 +77,51 @@ force.on("tick", function() {
 var node1 = {x: (w / 2), y: (h / 2), px: (w / 2 - 5), py: (h / 2 - 5)},
     node2 = {x: (w / 2), y: (h / 2), px: (w / 2 + 5), py: (h / 2 + 5)};
 
-svg.append("svg:circle")
-    .data([node1])
-    .attr("class", "node")
-    .attr("cx", function(d) { return d.x; })
-    .attr("cy", function(d) { return d.y; })
-    .attr("r", r)
+  svg.append("svg:circle")
+      .data([node1])
+      .attr("class", "node")
+      .attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; })
+      .attr("r", r)
 
-svg.append("svg:circle")
-    .data([node2])
-    .attr("class", "node")
-    .attr("cx", function(d) { return d.x; })
-    .attr("cy", function(d) { return d.y; })
-    .attr("r", r)
+  svg.append("svg:circle")
+      .data([node2])
+      .attr("class", "node")
+      .attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; })
+      .attr("r", r)
 
 
-force.nodes().push(node1);
-force.nodes().push(node2);
-force.start();
+  force.nodes().push(node1);
+  force.nodes().push(node2);
+  force.start();
+/*
+var p0;
 
-</script>
+svg.on("mousemove", function() {
+  var p1 = d3.svg.mouse(this),
+      node = {x: p1[0], y: p1[1], px: p1[0] + pm(5), py: p1[1] + pm(5)};
+
+  p0 = p1;
+
+  svg.append("svg:circle")
+      .data([node])
+      .attr("class", "node")
+      .attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; })
+      .attr("r", r)
+    //.transition()
+      //.ease("linear")
+      //.delay(5000)
+      //.attr("r", 1e-6)
+      //.each("end", function() { force.nodes().shift(); })
+      //.remove();
+
+  force.nodes().push(node);
+  force.start();
+});*/
+
+    </script>
+    <script type="text/javascript" src="hijs/hi.js"></script>
+  </body>
+</html>
