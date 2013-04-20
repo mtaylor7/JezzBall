@@ -1,187 +1,308 @@
 <!DOCTYPE html>
 <html>
-<style>
-
-body {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  width: 960px;
-  height: 500px;
-  position: relative;
-}
-
-rect {
-  fill: none;
-  pointer-events: all;
-}
-
-rect.bt, rect.lr {
-  fill: #33f;
-}
-
-rect.tb, rect.rl {
-  fill: #f33;
-}
-
-rect.black {
-  fill: #000;
-}
-
-</style>
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<div id="chart"></div>
-<script type="text/javascript">
-
-var w = 960,
-  h = 500,
-  r = 6,
-  v = 2;
-
-var force = d3.layout.force()
-  .gravity(0)
-  .charge(0)
-  .friction(1)
-  .size([w, h]);
-
-var svg = d3.select("#chart").append("svg:svg")
-  .attr("width", w)
-  .attr("height", h);
-
-svg.append("svg:rect")
-  .attr("width", w)
-  .attr("height", h);
-
-function a(d) {
-  if (svg.selectAll("." + d.c).empty()) {
-    svg.selectAll("." + d.c)
-      .data([d]).enter().append("rect")
-      .attr("class", d.c)
-      .attr("x", d.x)
-      .attr("y", d.y)
-      .attr("width", d.w)
-      .attr("height", d.h);
-  }
-}
-
-svg.on("click", function () {
-  var s = Math.random() > .5;
-  var p = d3.mouse(this);
-  var blue = {
-    x: s ? p[0] - 5 : p[0],
-    y: s ? p[1] - 10 : p[1] - 5,
-    w: 10,
-    h: 10,
-    c: s ? "bt" : "lr"
-  };
-  a(blue);
-  var red = {
-    x: s ? p[0] - 5 : p[0] - 10,
-    y: s ? p[1] : p[1] - 5,
-    w: 10,
-    h: 10,
-    c: s ? "tb" : "rl"
-  };
-  a(red);
-})
-
-force.on("tick", function () {
-  svg.selectAll("circle")
-    .attr("cx", function (d) {
-    var dx = d.px - d.x;
-    var m = w - r;
-    if (d.x < r) {
-      d.x = r + (r - d.x);
-      d.px = d.x - dx;
-    } else if (d.x > m) {
-      d.x = m - (d.x - m);
-      d.px = d.x - dx;
+  <style>
+    body {
+      font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
+      width: 960px;
+      height: 500px;
+      position: relative;
     }
-    return d.x;
-  })
-    .attr("cy", function (d) {
-    var dy = d.py - d.y;
-    var m = h - r;
-    if (d.y < r) {
-      d.y = r + (r - d.y);
-      d.py = d.y - dy;
-    } else if (d.y > m) {
-      d.y = m - (d.y - m);
-      d.py = d.y - dy;
+    rect {
+      fill: none;
+      pointer-events: all;
     }
-    return d.y;
-  });
+    rect.bt, rect.lr {
+      fill: #33f;
+      fill-opacity: .6;
+    }
+    rect.tb, rect.rl {
+      fill: #f33;
+      fill-opacity: .6;
+    }
+    rect.hwall, rect.vwall {
+      fill: #000;
+    }
+    .ball {
+      fill: red;
+    }
+  </style>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <div id="chart"></div>
+  <script type="text/javascript">
+    var w = 960,
+      h = 500,
+      r = 10,
+      v = 3,
+      sz = 20;
 
-  // bottom to top
-  svg.selectAll(".bt")
-    .attr("y", function (d) {
-    return d.y = d.y - v;
-  })
-    .attr("height", function (d) {
-    return d.h = d.h + v;
-  })
-    .attr("class", function (d) {
-    return d.c = (d.y <= 0 ? "black" : d.c);
-  });
+    var force = d3.layout.force()
+      .gravity(0)
+      .charge(0)
+      .friction(1)
+      .size([w, h]);
 
-  // left to right
-  svg.selectAll(".lr")
-    .attr("width", function (d) {
-    return d.w = d.w + v;
-  })
-    .attr("class", function (d) {
-    return d.c = (d.x + d.w >= w ? "black" : d.c);
-  });
+    var svg = d3.select("#chart").append("svg:svg")
+      .attr("width", w)
+      .attr("height", h);
 
-  // top to bottom
-  svg.selectAll(".tb")
-    .attr("height", function (d) {
-    return d.h = d.h + v;
-  })
-    .attr("class", function (d) {
-    return d.c = (d.y + d.h >= h ? "black" : d.c);
-  });
+    svg.append("svg:rect")
+      .attr("width", w)
+      .attr("height", h);
 
-  // right to left
-  svg.selectAll(".rl")
-    .attr("x", function (d) {
-    return d.x = d.x - v;
-  })
-    .attr("width", function (d) {
-    return d.w = d.w + v;
-  })
-    .attr("class", function (d) {
-    return d.c = (d.x <= 0 ? "black" : d.c);
-  });
+    function a(d) {
+      if (svg.selectAll("." + d.c).empty()) {
+        svg.selectAll("." + d.c)
+          .data([d]).enter().append("rect")
+          .attr("class", d.c + " wallbuilder")
+          .attr("x", d.x)
+          .attr("y", d.y)
+          .attr("width", d.w)
+          .attr("height", d.h);
+      }
+    }
 
-  force.resume();
-});
+    svg.on("click", function () {
+      var s = Math.random() > .5;
+      var p = d3.mouse(this);
+      var bx = s ? p[0] : p[0],
+        by = s ? p[1] - sz : p[1];
+      var blue = {
+        x: bx - bx % sz,
+        y: by - by % sz,
+        w: sz,
+        h: sz,
+        c: s ? "bt" : "lr"
+      };
+      a(blue);
+      var rx = s ? p[0] : p[0] - sz,
+        ry = s ? p[1] : p[1];
+      var red = {
+        x: rx - rx % sz,
+        y: ry - ry % sz,
+        w: sz,
+        h: sz,
+        c: s ? "tb" : "rl"
+      };
+      a(red);
+    })
 
-var node1 = {
-  x: (w / 2),
-  y: (h / 2),
-  px: (w / 2 - v),
-  py: (h / 2 - v)
-},
-  node2 = {
-    x: (w / 2),
-    y: (h / 2),
-    px: (w / 2 + v),
-    py: (h / 2 + v)
-  };
+     force.on("tick", function () {
+      svg.selectAll("circle")
+        .attr("cx", function (d) {
+        var dx = d.px - d.x;
+        var m = w - r;
+        if (d.x < r) {
+          d.x = r + (r - d.x);
+          d.px = d.x - dx;
+        } else if (d.x > m) {
+          d.x = m - (d.x - m);
+          d.px = d.x - dx;
+        }
+        return d.x;
+      })
+        .attr("cy", function (d) {
+        var dy = d.py - d.y;
+        var m = h - r;
+        if (d.y < r) {
+          d.y = r + (r - d.y);
+          d.py = d.y - dy;
+        } else if (d.y > m) {
+          d.y = m - (d.y - m);
+          d.py = d.y - dy;
+        }
+        return d.y;
+      });
 
-[node1, node2].forEach(function (node) {
-  svg.append("svg:circle")
-    .data([node])
-    .attr("class", "node")
-    .attr("cx", function (d) {
-    return d.x;
-  })
-    .attr("cy", function (d) {
-    return d.y;
-  })
-    .attr("r", r);
-  force.nodes().push(node);
-});
+      svg.selectAll(".ball")
+        .each(function (b) {
+        var first = function (d, i) {
+          return i == 0;
+        };
+        if (b.px < b.x) {
+          var f = function (w) {
+            return intersect({
+              x: b.px - r,
+              y: b.py - r
+            }, {
+              x: b.x + r,
+              y: b.y + r
+            }, w, {
+              x: w.x,
+              y: w.y + w.h
+            });
+          };
+          svg.selectAll(".vwall")
+            .filter(f).filter(first).each(function (d) {
+            var m = d.x - r;
+            var dx = b.px - b.x;
+            b.x = m - (b.x - m);
+            b.px = b.x - dx;
+          });
+          svg.selectAll(".vwallbuilder")
+            .filter(f).remove();
+        } else {
+          var f = function (w) {
+            return intersect({
+              x: b.px - r,
+              y: b.py - r
+            }, {
+              x: b.x + r,
+              y: b.y + r
+            }, {
+              x: w.x + w.w,
+              y: w.y
+            }, {
+              x: w.x + w.w,
+              y: w.y + w.h
+            });
+          };
+          svg.selectAll(".vwall")
+            .filter(f).filter(first).each(function (d) {
+            var m = d.x + d.w + r;
+            var dx = b.px - b.x;
+            b.x = m + (m - b.x);
+            b.px = b.x - dx;
+          });
+          svg.selectAll(".vwallbuilder")
+            .filter(f).remove();
+        }
+        if (b.py < b.y) {
+          var f = function (w) {
+            return intersect({
+              x: b.px - r,
+              y: b.py - r
+            }, {
+              x: b.x + r,
+              y: b.y + r
+            }, w, {
+              x: w.x + w.w,
+              y: w.y
+            });
+          };
+          svg.selectAll(".hwall")
+            .filter(f).filter(first).each(function (d) {
+            var m = d.y - r;
+            var dy = b.py - b.y;
+            b.y = m - (b.y - m);
+            b.py = b.y - dy;
+          });
+          svg.selectAll(".hwallbuilder")
+            .filter(f).remove();
+        } else {
+          var f = function (w) {
+            return intersect({
+              x: b.px - r,
+              y: b.py - r
+            }, {
+              x: b.x + r,
+              y: b.y + r
+            }, {
+              x: w.x,
+              y: w.y + w.h
+            }, {
+              x: w.x + w.w,
+              y: w.y + w.h
+            });
+          };
+          svg.selectAll(".hwall")
+            .filter(f).filter(first).each(function (d) {
+            var m = d.y + d.h + r;
+            var dy = b.py - b.y;
+            b.y = m + (m - b.y);
+            b.py = b.y - dy;
+          });
+          svg.selectAll(".hwallbuilder")
+            .filter(f).remove();
+        }
+      })
 
-force.start();
+      // bottom to top
+      svg.selectAll(".bt")
+        .attr("y", function (d) {
+        return d.y = d.y - v;
+      })
+        .attr("height", function (d) {
+        return d.h = d.h + v;
+      })
+        .attr("class", function (d) {
+        return d.c = (d.y <= 0 ? "vwall" : d.c + " vwallbuilder");
+      });
 
-</script>
+      // left to right
+      svg.selectAll(".lr")
+        .attr("width", function (d) {
+        return d.w = d.w + v;
+      })
+        .attr("class", function (d) {
+        return d.c = (d.x + d.w >= w ? "hwall" : d.c + " hwallbuilder");
+      });
+
+      // top to bottom
+      svg.selectAll(".tb")
+        .attr("height", function (d) {
+        return d.h = d.h + v;
+      })
+        .attr("class", function (d) {
+        return d.c = (d.y + d.h >= h ? "vwall" : d.c + " vwallbuilder");
+      });
+
+      // right to left
+      svg.selectAll(".rl")
+        .attr("x", function (d) {
+        return d.x = d.x - v;
+      })
+        .attr("width", function (d) {
+        return d.w = d.w + v;
+      })
+        .attr("class", function (d) {
+        return d.c = (d.x <= 0 ? "hwall" : d.c + " hwallbuilder");
+      });
+
+      force.resume();
+    });
+
+    var ball1 = {
+      x: (w / 2),
+      y: (h / 2),
+      px: (w / 2 - v),
+      py: (h / 2 - v)
+    },
+      ball2 = {
+        x: (w / 2),
+        y: (h / 2),
+        px: (w / 2 + v),
+        py: (h / 2 + v)
+      };
+
+    [ball1, ball2].forEach(function (b) {
+      svg.append("svg:circle")
+        .data([b])
+        .attr("class", "ball")
+        .attr("cx", function (d) {
+        return d.x;
+      })
+        .attr("cy", function (d) {
+        return d.y;
+      })
+        .attr("r", r);
+      force.nodes().push(b);
+    });
+
+    force.start();
+
+
+    function intersect(a1, a2, b1, b2) {
+      var ua_t = (b2.x - b1.x) * (a1.y - b1.y) - (b2.y - b1.y) * (a1.x - b1.x);
+      var ub_t = (a2.x - a1.x) * (a1.y - b1.y) - (a2.y - a1.y) * (a1.x - b1.x);
+      var u_b = (b2.y - b1.y) * (a2.x - a1.x) - (b2.x - b1.x) * (a2.y - a1.y);
+
+      if (u_b != 0) {
+        var ua = ua_t / u_b;
+        var ub = ub_t / u_b;
+
+        return 0 <= ua && ua <= 1 && 0 <= ub && ub <= 1;
+      } else {
+        return true;
+      }
+    };
+  </script>
