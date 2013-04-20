@@ -315,12 +315,10 @@ function wallAhead(x, y) {
     });
 
     function fillEmptyRooms(d) {
-      console.log("avant x=" + d.x + " y=" + d.y + " w=" + d.w + " h=" + d.h);
       d.x = Math.round(d.x / sz) * sz;
       d.y = Math.round(d.y / sz) * sz;
       d.w = Math.round(d.w / sz) * sz;
       d.h = Math.round(d.h / sz) * sz;
-      console.log("apres x=" + d.x + " y=" + d.y + " w=" + d.w + " h=" + d.h);
       var cells = d3.selectAll(".cell");
       var xmax = d.x + d.w;
       var ymax = d.y + d.h
