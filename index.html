@@ -54,7 +54,11 @@ function a(d) {
   if (svg.selectAll("." + d.c).empty()) {
     svg.selectAll("." + d.c)
       .data([d]).enter().append("rect")
-      .attr("class", d.c);
+      .attr("class", d.c)
+      .attr("x", d.x)
+      .attr("y", d.y)
+      .attr("width", d.w)
+      .attr("height", d.h);
   }
 }
 
@@ -108,14 +112,8 @@ force.on("tick", function () {
 
   // bottom to top
   svg.selectAll(".bt")
-    .attr("x", function (d) {
-    return d.x;
-  })
     .attr("y", function (d) {
     return d.y = d.y - v;
-  })
-    .attr("width", function (d) {
-    return d.w;
   })
     .attr("height", function (d) {
     return d.h = d.h + v;
@@ -126,17 +124,8 @@ force.on("tick", function () {
 
   // left to right
   svg.selectAll(".lr")
-    .attr("x", function (d) {
-    return d.x;
-  })
-    .attr("y", function (d) {
-    return d.y;
-  })
     .attr("width", function (d) {
     return d.w = d.w + v;
-  })
-    .attr("height", function (d) {
-    return d.h;
   })
     .attr("class", function (d) {
     return d.c = (d.x + d.w >= w ? "black" : d.c);
@@ -144,15 +133,6 @@ force.on("tick", function () {
 
   // top to bottom
   svg.selectAll(".tb")
-    .attr("x", function (d) {
-    return d.x;
-  })
-    .attr("y", function (d) {
-    return d.y;
-  })
-    .attr("width", function (d) {
-    return d.w;
-  })
     .attr("height", function (d) {
     return d.h = d.h + v;
   })
@@ -165,14 +145,8 @@ force.on("tick", function () {
     .attr("x", function (d) {
     return d.x = d.x - v;
   })
-    .attr("y", function (d) {
-    return d.y;
-  })
     .attr("width", function (d) {
     return d.w = d.w + v;
-  })
-    .attr("height", function (d) {
-    return d.h;
   })
     .attr("class", function (d) {
     return d.c = (d.x <= 0 ? "black" : d.c);
