@@ -39,12 +39,16 @@
     }
   </style>
   <script src="http://d3js.org/d3.v3.min.js"></script>
-  <div id="chart"></div>
+  <div id="chart">
+    <form>
+      <input id="switch" type="button" value="switch" />
+    </form>
+  </div>
   <script type="text/javascript">
     var w = 960,
       h = 500,
       r = 10,
-      v = 3,
+      v = 5,
       sz = 20;
 
     var ball1 = {
@@ -78,19 +82,22 @@
 
     var rows = Math.ceil(h / sz);
     var cols = Math.ceil(w / sz);
-    svg.selectAll(".cell").data(d3.range(0, rows * cols).map(function (d) {
+
+    var cells = d3.range(0, rows * cols).map(function (d) {
       return {
         x: (d % cols) * sz,
         y: (Math.floor(d / cols) % rows) * sz
       };
-    })).enter()
+    });
+
+    svg.selectAll(".cell").data(cells).enter()
       .append("rect")
       .attr("class", "cell")
       .attr("x", function (d) {
-      return d.x
+      return d.x;
     })
       .attr("y", function (d) {
-      return d.y
+      return d.y;
     })
       .attr("width", sz)
       .attr("height", sz);
@@ -108,24 +115,28 @@
       }
     }
 
-    svg.on("click", function () {
-      var s = Math.random() > .5;
+    var s = true;
+    d3.select("#switch").on("click", function () {
+      s = !s;
+    })
+
+     svg.on("click", function () {
       var p = d3.mouse(this);
-      var bx = s ? p[0] : p[0],
+      var bx = p[0],
         by = s ? p[1] - sz : p[1];
       var blue = {
-        x: bx - bx % sz,
-        y: by - by % sz,
+        x: Math.round(bx / sz) * sz,
+        y: Math.round(by / sz) * sz,
         w: sz,
         h: sz,
         c: s ? "bt" : "lr"
       };
       a(blue);
       var rx = s ? p[0] : p[0] - sz,
-        ry = s ? p[1] : p[1];
+        ry = p[1];
       var red = {
-        x: rx - rx % sz,
-        y: ry - ry % sz,
+        x: Math.round(rx / sz) * sz,
+        y: Math.round(ry / sz) * sz,
         w: sz,
         h: sz,
         c: s ? "tb" : "rl"
@@ -257,6 +268,15 @@
         }
       })
 
+
+      var walls = d3.selectAll(".blackcell");
+
+      function wallAhead(x, y) {
+        return !walls.filter(function (w) {
+          return w.x == x && w.y == y;
+        }).empty()
+      }
+
       // bottom to top
       svg.selectAll(".bt")
         .attr("y", function (d) {
@@ -265,7 +285,7 @@
         .attr("height", function (d) {
         return d.h = d.h + v;
       }).filter(function (d) {
-        return d.y <= 0;
+        return d.y <= 0 || wallAhead(d.x, d.y - d.y % sz);
       }).attr("class", "wall").each(fillEmptyRooms);
 
       // left to right
@@ -273,7 +293,7 @@
         .attr("width", function (d) {
         return d.w = d.w + v;
       }).filter(function (d) {
-        return d.x + d.w >= w;
+        return d.x + d.w >= w || wallAhead(d.x + (d.w - d.w % sz), d.y);
       }).attr("class", "wall").each(fillEmptyRooms);
 
       // top to bottom
@@ -281,7 +301,7 @@
         .attr("height", function (d) {
         return d.h = d.h + v;
       }).filter(function (d) {
-        return d.y + d.h >= h;
+        return d.y + d.h >= h || wallAhead(d.x, d.y + (d.h - d.h % sz));
       }).attr("class", "wall").each(fillEmptyRooms);
 
       // right to left
@@ -291,18 +311,22 @@
       })
         .attr("width", function (d) {
         return d.w = d.w + v;
-      }).filter(function (d) {
-        return d.x <= 0;
-      }).attr("class", "wall").each(fillEmptyRooms);
+      })
+        .filter(function (d) {
+        return d.x <= 0 || wallAhead(d.x - d.x % sz, d.y);
+      })
+        .attr("class", "wall").each(fillEmptyRooms);
 
       force.resume();
     });
 
     function fillEmptyRooms(d) {
-      d.x = Math.max(d.x, 0);
-      d.y = Math.max(d.y, 0);
-      d.w = d.w - d.w % sz;
-      d.h = d.h - d.h % sz;
+      console.log("avant x=" + d.x + " y=" + d.y + " w=" + d.w + " h=" + d.h);
+      d.x = Math.round(d.x / sz) * sz;
+      d.y = Math.round(d.y / sz) * sz;
+      d.w = Math.round(d.w / sz) * sz;
+      d.h = Math.round(d.h / sz) * sz;
+      console.log("apres x=" + d.x + " y=" + d.y + " w=" + d.w + " h=" + d.h);
       var cells = d3.selectAll(".cell");
       var xmax = d.x + d.w;
       var ymax = d.y + d.h
@@ -317,7 +341,13 @@
       var balls = d3.selectAll(".ball").each(function (d) {
         var x = d.x - d.x % sz;
         var y = d.y - d.y % sz;
-        visit(pending, x, y);
+        pending.filter(function (d) {
+          return y == d.y && x == d.x;
+        }).attr("class", "cell")
+          .each(function (c) {
+          c.visited = true;
+          visit(pending, c.x, c.y);
+        });
       });
       d3.selectAll(".pending").attr("class", "blackcell");
       d3.selectAll(".cell").each(function (d) {
@@ -343,7 +373,7 @@
     function visit(cells, x, y) {
       cells
         .filter(function (d) {
-        return !d.visited && ((y == d.y && x - sz <= d.x && d.x <= x + sz) || (x == d.x && y - sz <= d.y && d.y <= y + sz));
+        return !d.visited && ((y == d.y && (x - sz == d.x || d.x == x + sz)) || (x == d.x && (y - sz == d.y || d.y == y + sz)));
       })
         .attr("class", "cell")
         .each(function (c) {
