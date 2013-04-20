@@ -14,73 +14,200 @@ rect {
   pointer-events: all;
 }
 
+rect.bt, rect.lr {
+  fill: #33f;
+}
+
+rect.tb, rect.rl {
+  fill: #f33;
+}
+
+rect.black {
+  fill: #000;
+}
+
 </style>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <div id="chart"></div>
 <script type="text/javascript">
 
 var w = 960,
-    h = 500,
-    r = 6;
+  h = 500,
+  r = 6,
+  v = 2;
 
 var force = d3.layout.force()
-    .gravity(0)
-    .charge(0)
-    .friction(1)
-    .size([w, h]);
+  .gravity(0)
+  .charge(0)
+  .friction(1)
+  .size([w, h]);
 
 var svg = d3.select("#chart").append("svg:svg")
-    .attr("width", w)
-    .attr("height", h);
+  .attr("width", w)
+  .attr("height", h);
 
 svg.append("svg:rect")
-    .attr("width", w)
-    .attr("height", h);
+  .attr("width", w)
+  .attr("height", h);
 
-force.on("tick", function() {
+function a(d) {
+  if (svg.selectAll("." + d.c).empty()) {
+    svg.selectAll("." + d.c)
+      .data([d]).enter().append("rect")
+      .attr("class", d.c);
+  }
+}
+
+svg.on("click", function () {
+  var s = Math.random() > .5;
+  var p = d3.mouse(this);
+  var blue = {
+    x: s ? p[0] - 5 : p[0],
+    y: s ? p[1] - 10 : p[1] - 5,
+    w: 10,
+    h: 10,
+    c: s ? "bt" : "lr"
+  };
+  a(blue);
+  var red = {
+    x: s ? p[0] - 5 : p[0] - 10,
+    y: s ? p[1] : p[1] - 5,
+    w: 10,
+    h: 10,
+    c: s ? "tb" : "rl"
+  };
+  a(red);
+})
+
+force.on("tick", function () {
   svg.selectAll("circle")
-      .attr("cx", function(d) {
-                      var dx = d.px - d.x;
-                      var max = w - r;
-                      if (d.x < r) {
-                          d.x = r + (r - d.x);
-                          d.px = d.x - dx;
-                      } else if (d.x > max) {
-                          d.x = max - (d.x - max);
-                          d.px = d.x - dx;
-                      }
-                      return d.x;
-                  })
-      .attr("cy", function(d) {
-                      var dy = d.py - d.y;
-                      var max = h - r;
-                      if (d.y < r) {
-                          d.y = r + (r - d.y);
-                          d.py = d.y - dy;
-                      } else if (d.y > max) {
-                          d.y = max - (d.y - max);
-                          d.py = d.y - dy;
-                      }
-                      return d.y;
-                  })
+    .attr("cx", function (d) {
+    var dx = d.px - d.x;
+    var m = w - r;
+    if (d.x < r) {
+      d.x = r + (r - d.x);
+      d.px = d.x - dx;
+    } else if (d.x > m) {
+      d.x = m - (d.x - m);
+      d.px = d.x - dx;
+    }
+    return d.x;
+  })
+    .attr("cy", function (d) {
+    var dy = d.py - d.y;
+    var m = h - r;
+    if (d.y < r) {
+      d.y = r + (r - d.y);
+      d.py = d.y - dy;
+    } else if (d.y > m) {
+      d.y = m - (d.y - m);
+      d.py = d.y - dy;
+    }
+    return d.y;
+  });
+
+  // bottom to top
+  svg.selectAll(".bt")
+    .attr("x", function (d) {
+    return d.x;
+  })
+    .attr("y", function (d) {
+    return d.y = d.y - v;
+  })
+    .attr("width", function (d) {
+    return d.w;
+  })
+    .attr("height", function (d) {
+    return d.h = d.h + v;
+  })
+    .attr("class", function (d) {
+    return d.c = (d.y <= 0 ? "black" : d.c);
+  });
+
+  // left to right
+  svg.selectAll(".lr")
+    .attr("x", function (d) {
+    return d.x;
+  })
+    .attr("y", function (d) {
+    return d.y;
+  })
+    .attr("width", function (d) {
+    return d.w = d.w + v;
+  })
+    .attr("height", function (d) {
+    return d.h;
+  })
+    .attr("class", function (d) {
+    return d.c = (d.x + d.w >= w ? "black" : d.c);
+  });
+
+  // top to bottom
+  svg.selectAll(".tb")
+    .attr("x", function (d) {
+    return d.x;
+  })
+    .attr("y", function (d) {
+    return d.y;
+  })
+    .attr("width", function (d) {
+    return d.w;
+  })
+    .attr("height", function (d) {
+    return d.h = d.h + v;
+  })
+    .attr("class", function (d) {
+    return d.c = (d.y + d.h >= h ? "black" : d.c);
+  });
+
+  // right to left
+  svg.selectAll(".rl")
+    .attr("x", function (d) {
+    return d.x = d.x - v;
+  })
+    .attr("y", function (d) {
+    return d.y;
+  })
+    .attr("width", function (d) {
+    return d.w = d.w + v;
+  })
+    .attr("height", function (d) {
+    return d.h;
+  })
+    .attr("class", function (d) {
+    return d.c = (d.x <= 0 ? "black" : d.c);
+  });
+
   force.resume();
 });
 
-function pushNode(node) {
+var node1 = {
+  x: (w / 2),
+  y: (h / 2),
+  px: (w / 2 - v),
+  py: (h / 2 - v)
+},
+  node2 = {
+    x: (w / 2),
+    y: (h / 2),
+    px: (w / 2 + v),
+    py: (h / 2 + v)
+  };
+
+[node1, node2].forEach(function (node) {
   svg.append("svg:circle")
-      .data([node])
-      .attr("class", "node")
-      .attr("cx", function(d) { return d.x; })
-      .attr("cy", function(d) { return d.y; })
-      .attr("r", r);
+    .data([node])
+    .attr("class", "node")
+    .attr("cx", function (d) {
+    return d.x;
+  })
+    .attr("cy", function (d) {
+    return d.y;
+  })
+    .attr("r", r);
   force.nodes().push(node);
-}
+});
 
-var node1 = {x: (w / 2), y: (h / 2), px: (w / 2 - 1), py: (h / 2 - 1)},
-    node2 = {x: (w / 2), y: (h / 2), px: (w / 2 + 1), py: (h / 2 + 1)};
-
-pushNode(node1);
-pushNode(node2);
 force.start();
 
 </script>
