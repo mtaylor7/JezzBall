@@ -7,6 +7,11 @@
       height: 500px;
       position: relative;
     }
+    form {
+      position: absolute;
+      top: 1em;
+      left: 1em;
+    }
     rect {
       fill: none;
       pointer-events: all;
@@ -39,8 +44,8 @@
     }
   </style>
   <script src="http://d3js.org/d3.v3.min.js"></script>
+  <form><input id="switch" type="button" value="V" /></form>
   <div id="chart"></div>
-  <form><input id="switch" type="button" value="switch" /></form>
   <script type="text/javascript">
     var w = 960,
       h = 500,
@@ -113,7 +118,7 @@
     }
 
     var s = true;
-    d3.select("#switch").on("click", function() { s = !s;})
+    d3.select("#switch").on("click", function(e) { s = !s; d3.select("#switch").attr("value", s ? "V" : "H"); })
 
     svg.on("click", function () {
       var p = d3.mouse(this);
