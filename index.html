@@ -21,9 +21,21 @@
     }
     rect.wall {
       fill: #000;
+      fill-opacity: .1;
+    }
+    rect.wall0 {
+      fill: #000;
+      fill-opacity: .3;
     }
     .ball {
       fill: red;
+    }
+    rect.cell {
+      stroke: #333;
+      stroke-opacity: .2;
+    }
+    rect.blackcell {
+      fill: #000;
     }
   </style>
   <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -34,6 +46,21 @@
       r = 10,
       v = 3,
       sz = 20;
+
+    var ball1 = {
+      x: (w / 2),
+      y: (h / 2),
+      px: (w / 2 - v),
+      py: (h / 2 - v)
+    },
+      ball2 = {
+        x: (w / 2),
+        y: (h / 2),
+        px: (w / 2 + v),
+        py: (h / 2 + v)
+      };
+
+    var balls = [ball1, ball2];
 
     var force = d3.layout.force()
       .gravity(0)
@@ -48,6 +75,26 @@
     svg.append("svg:rect")
       .attr("width", w)
       .attr("height", h);
+
+    var rows = Math.ceil(h / sz);
+    var cols = Math.ceil(w / sz);
+    svg.selectAll(".cell").data(d3.range(0, rows * cols).map(function (d) {
+      return {
+        x: (d % cols) * sz,
+        y: (Math.floor(d / cols) % rows) * sz
+      };
+    })).enter()
+      .append("rect")
+      .attr("class", "cell")
+      .attr("x", function (d) {
+      return d.x
+    })
+      .attr("y", function (d) {
+      return d.y
+    })
+      .attr("width", sz)
+      .attr("height", sz);
+
 
     function a(d) {
       if (svg.selectAll("." + d.c).empty()) {
@@ -219,7 +266,7 @@
         return d.h = d.h + v;
       }).filter(function (d) {
         return d.y <= 0;
-      }).attr("class", "wall");
+      }).attr("class", "wall").each(fillEmptyRooms);
 
       // left to right
       svg.selectAll(".lr")
@@ -227,7 +274,7 @@
         return d.w = d.w + v;
       }).filter(function (d) {
         return d.x + d.w >= w;
-      }).attr("class", "wall");
+      }).attr("class", "wall").each(fillEmptyRooms);
 
       // top to bottom
       svg.selectAll(".tb")
@@ -235,7 +282,7 @@
         return d.h = d.h + v;
       }).filter(function (d) {
         return d.y + d.h >= h;
-      }).attr("class", "wall");
+      }).attr("class", "wall").each(fillEmptyRooms);
 
       // right to left
       svg.selectAll(".rl")
@@ -246,27 +293,38 @@
         return d.w = d.w + v;
       }).filter(function (d) {
         return d.x <= 0;
-      }).attr("class", "wall");
+      }).attr("class", "wall").each(fillEmptyRooms);
 
       force.resume();
     });
 
-    function fillEmptyRooms() {}
-
-    var ball1 = {
-      x: (w / 2),
-      y: (h / 2),
-      px: (w / 2 - v),
-      py: (h / 2 - v)
-    },
-      ball2 = {
-        x: (w / 2),
-        y: (h / 2),
-        px: (w / 2 + v),
-        py: (h / 2 + v)
-      };
-
-    [ball1, ball2].forEach(function (b) {
+    function fillEmptyRooms(d) {
+      d.x = Math.max(d.x, 0);
+      d.y = Math.max(d.y, 0);
+      d.w = d.w - d.w % sz;
+      d.h = d.h - d.h % sz;
+      var cells = d3.selectAll(".cell");
+      var xmax = d.x + d.w;
+      var ymax = d.y + d.h
+      for (var x = d.x; x < xmax; x += sz) {
+        for (var y = d.y; y < ymax; y += sz) {
+          cells.filter(function (d) {
+            return d.x == x && d.y == y;
+          }).attr("class", "blackcell");
+        }
+      }
+      var pending = d3.selectAll(".cell").attr("class", "pending");
+      var balls = d3.selectAll(".ball").each(function (d) {
+        var x = d.x - d.x % sz;
+        var y = d.y - d.y % sz;
+        visit(pending, x, y);
+      });
+      d3.selectAll(".pending").attr("class", "blackcell");
+      d3.selectAll(".cell").each(function (d) {
+        d.visited = false;
+      });
+    }
+    balls.forEach(function (b) {
       svg.append("svg:circle")
         .data([b])
         .attr("class", "ball")
@@ -282,6 +340,17 @@
 
     force.start();
 
+    function visit(cells, x, y) {
+      cells
+        .filter(function (d) {
+        return !d.visited && ((y == d.y && x - sz <= d.x && d.x <= x + sz) || (x == d.x && y - sz <= d.y && d.y <= y + sz));
+      })
+        .attr("class", "cell")
+        .each(function (c) {
+        c.visited = true;
+        visit(cells, c.x, c.y);
+      });
+    }
 
     function intersect(a1, a2, b1, b2) {
       var ua_t = (b2.x - b1.x) * (a1.y - b1.y) - (b2.y - b1.y) * (a1.x - b1.x);
