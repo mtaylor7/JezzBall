@@ -39,11 +39,8 @@
     }
   </style>
   <script src="http://d3js.org/d3.v3.min.js"></script>
-  <div id="chart">
-    <form>
-      <input id="switch" type="button" value="switch" />
-    </form>
-  </div>
+  <div id="chart"></div>
+  <form><input id="switch" type="button" value="switch" /></form>
   <script type="text/javascript">
     var w = 960,
       h = 500,
@@ -82,23 +79,23 @@
 
     var rows = Math.ceil(h / sz);
     var cols = Math.ceil(w / sz);
-
+    
     var cells = d3.range(0, rows * cols).map(function (d) {
       return {
         x: (d % cols) * sz,
         y: (Math.floor(d / cols) % rows) * sz
       };
     });
-
+    
     svg.selectAll(".cell").data(cells).enter()
       .append("rect")
       .attr("class", "cell")
       .attr("x", function (d) {
-      return d.x;
-    })
+        return d.x;
+      })
       .attr("y", function (d) {
-      return d.y;
-    })
+        return d.y;
+      })
       .attr("width", sz)
       .attr("height", sz);
 
@@ -116,11 +113,9 @@
     }
 
     var s = true;
-    d3.select("#switch").on("click", function () {
-      s = !s;
-    })
+    d3.select("#switch").on("click", function() { s = !s;})
 
-     svg.on("click", function () {
+    svg.on("click", function () {
       var p = d3.mouse(this);
       var bx = p[0],
         by = s ? p[1] - sz : p[1];
@@ -269,13 +264,12 @@
       })
 
 
-      var walls = d3.selectAll(".blackcell");
-
-      function wallAhead(x, y) {
-        return !walls.filter(function (w) {
-          return w.x == x && w.y == y;
-        }).empty()
-      }
+var walls = d3.selectAll(".blackcell");
+function wallAhead(x, y) {
+  return !walls.filter(function(w) {
+                      return w.x == x && w.y == y;
+                    }).empty()
+}
 
       // bottom to top
       svg.selectAll(".bt")
@@ -307,14 +301,14 @@
       // right to left
       svg.selectAll(".rl")
         .attr("x", function (d) {
-        return d.x = d.x - v;
-      })
+          return d.x = d.x - v;
+        })
         .attr("width", function (d) {
-        return d.w = d.w + v;
-      })
+          return d.w = d.w + v;
+        })
         .filter(function (d) {
-        return d.x <= 0 || wallAhead(d.x - d.x % sz, d.y);
-      })
+          return d.x <= 0 || wallAhead(d.x - d.x % sz, d.y);
+        })
         .attr("class", "wall").each(fillEmptyRooms);
 
       force.resume();
