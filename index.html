@@ -1,396 +1,409 @@
 <!DOCTYPE html>
-<html>
-  <style>
-    body {
-      font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
-      width: 960px;
-      height: 500px;
-      position: relative;
-    }
-    form {
-      position: absolute;
-      top: 1em;
-      left: 1em;
-    }
-    rect {
-      fill: none;
-      pointer-events: all;
-    }
-    rect.bt, rect.lr {
-      fill: #33f;
-      fill-opacity: .6;
-    }
-    rect.tb, rect.rl {
-      fill: #f33;
-      fill-opacity: .6;
-    }
-    rect.wall {
-      fill: #000;
-      fill-opacity: .1;
-    }
-    rect.wall0 {
-      fill: #000;
-      fill-opacity: .3;
-    }
-    .ball {
-      fill: red;
-    }
-    rect.cell {
-      stroke: #333;
-      stroke-opacity: .2;
-    }
-    rect.blackcell {
-      fill: #000;
-    }
-  </style>
-  <script src="http://d3js.org/d3.v3.min.js"></script>
-  <form><input id="switch" type="button" value="V" /></form>
-  <div id="chart"></div>
-  <script type="text/javascript">
-    var w = 960,
-      h = 500,
-      r = 10,
-      v = 5,
-      sz = 20;
+<meta charset="utf-8">
+<title>D3 JezzBall</title>
+<style>
 
-    var ball1 = {
-      x: (w / 2),
-      y: (h / 2),
-      px: (w / 2 - v),
-      py: (h / 2 - v)
-    },
-      ball2 = {
-        x: (w / 2),
-        y: (h / 2),
-        px: (w / 2 + v),
-        py: (h / 2 + v)
-      };
-
-    var balls = [ball1, ball2];
-
-    var force = d3.layout.force()
-      .gravity(0)
-      .charge(0)
-      .friction(1)
-      .size([w, h]);
-
-    var svg = d3.select("#chart").append("svg:svg")
-      .attr("width", w)
-      .attr("height", h);
-
-    svg.append("svg:rect")
-      .attr("width", w)
-      .attr("height", h);
-
-    var rows = Math.ceil(h / sz);
-    var cols = Math.ceil(w / sz);
-    
-    var cells = d3.range(0, rows * cols).map(function (d) {
-      return {
-        x: (d % cols) * sz,
-        y: (Math.floor(d / cols) % rows) * sz
-      };
-    });
-    
-    svg.selectAll(".cell").data(cells).enter()
-      .append("rect")
-      .attr("class", "cell")
-      .attr("x", function (d) {
-        return d.x;
-      })
-      .attr("y", function (d) {
-        return d.y;
-      })
-      .attr("width", sz)
-      .attr("height", sz);
-
-
-    function a(d) {
-      if (svg.selectAll("." + d.c).empty()) {
-        svg.selectAll("." + d.c)
-          .data([d]).enter().append("rect")
-          .attr("class", d.c + " wallbuilder")
-          .attr("x", d.x)
-          .attr("y", d.y)
-          .attr("width", d.w)
-          .attr("height", d.h);
-      }
-    }
-
-    var s = true;
-    d3.select("#switch").on("click", function(e) { s = !s; d3.select("#switch").attr("value", s ? "V" : "H"); })
-
-    svg.on("click", function () {
-      var p = d3.mouse(this);
-      var bx = p[0],
-        by = s ? p[1] - sz : p[1];
-      var blue = {
-        x: Math.round(bx / sz) * sz,
-        y: Math.round(by / sz) * sz,
-        w: sz,
-        h: sz,
-        c: s ? "bt" : "lr"
-      };
-      a(blue);
-      var rx = s ? p[0] : p[0] - sz,
-        ry = p[1];
-      var red = {
-        x: Math.round(rx / sz) * sz,
-        y: Math.round(ry / sz) * sz,
-        w: sz,
-        h: sz,
-        c: s ? "tb" : "rl"
-      };
-      a(red);
-    })
-
-     force.on("tick", function () {
-      svg.selectAll("circle")
-        .attr("cx", function (d) {
-        var dx = d.px - d.x;
-        var m = w - r;
-        if (d.x < r) {
-          d.x = r + (r - d.x);
-          d.px = d.x - dx;
-        } else if (d.x > m) {
-          d.x = m - (d.x - m);
-          d.px = d.x - dx;
-        }
-        return d.x;
-      })
-        .attr("cy", function (d) {
-        var dy = d.py - d.y;
-        var m = h - r;
-        if (d.y < r) {
-          d.y = r + (r - d.y);
-          d.py = d.y - dy;
-        } else if (d.y > m) {
-          d.y = m - (d.y - m);
-          d.py = d.y - dy;
-        }
-        return d.y;
-      });
-
-      svg.selectAll(".ball")
-        .each(function (b) {
-        var walls = svg.selectAll(".wall");
-        var builders = svg.selectAll(".wallbuilder");
-        var first = function (d, i) {
-          return i == 0;
-        };
-        if (b.px < b.x) {
-          var f = function (w) {
-            return intersect({
-              x: b.px + r,
-              y: b.py
-            }, {
-              x: b.x + r,
-              y: b.y
-            }, w, {
-              x: w.x,
-              y: w.y + w.h
-            });
-          };
-          walls.filter(f).filter(first).each(function (d) {
-            var m = d.x - r;
-            var dx = b.px - b.x;
-            b.x = m - (b.x - m);
-            b.px = b.x - dx;
-          });
-          builders.filter(f).remove();
-        } else {
-          var f = function (w) {
-            return intersect({
-              x: b.px - r,
-              y: b.py
-            }, {
-              x: b.x - r,
-              y: b.y
-            }, {
-              x: w.x + w.w,
-              y: w.y
-            }, {
-              x: w.x + w.w,
-              y: w.y + w.h
-            });
-          };
-          walls.filter(f).filter(first).each(function (d) {
-            var m = d.x + d.w + r;
-            var dx = b.px - b.x;
-            b.x = m + (m - b.x);
-            b.px = b.x - dx;
-          });
-          builders.filter(f).remove();
-        }
-        if (b.py < b.y) {
-          var f = function (w) {
-            return intersect({
-              x: b.px,
-              y: b.py + r
-            }, {
-              x: b.x,
-              y: b.y + r
-            }, w, {
-              x: w.x + w.w,
-              y: w.y
-            });
-          };
-          walls.filter(f).filter(first).each(function (d) {
-            var m = d.y - r;
-            var dy = b.py - b.y;
-            b.y = m - (b.y - m);
-            b.py = b.y - dy;
-          });
-          builders.filter(f).remove();
-        } else {
-          var f = function (w) {
-            return intersect({
-              x: b.px,
-              y: b.py - r
-            }, {
-              x: b.x,
-              y: b.y - r
-            }, {
-              x: w.x,
-              y: w.y + w.h
-            }, {
-              x: w.x + w.w,
-              y: w.y + w.h
-            });
-          };
-          walls.filter(f).filter(first).each(function (d) {
-            var m = d.y + d.h + r;
-            var dy = b.py - b.y;
-            b.y = m + (m - b.y);
-            b.py = b.y - dy;
-          });
-          builders.filter(f).remove();
-        }
-      })
-
-
-var walls = d3.selectAll(".blackcell");
-function wallAhead(x, y) {
-  return !walls.filter(function(w) {
-                      return w.x == x && w.y == y;
-                    }).empty()
+.point {
+  fill: #999;
+  stroke: #fff;
 }
 
-      // bottom to top
-      svg.selectAll(".bt")
-        .attr("y", function (d) {
-        return d.y = d.y - v;
-      })
-        .attr("height", function (d) {
-        return d.h = d.h + v;
-      }).filter(function (d) {
-        return d.y <= 0 || wallAhead(d.x, d.y - d.y % sz);
-      }).attr("class", "wall").each(fillEmptyRooms);
+.point.scanned {
+  fill: orange;
+  fill-opacity: 1;
+  stroke: brown;
+}
 
-      // left to right
-      svg.selectAll(".lr")
-        .attr("width", function (d) {
-        return d.w = d.w + v;
-      }).filter(function (d) {
-        return d.x + d.w >= w || wallAhead(d.x + (d.w - d.w % sz), d.y);
-      }).attr("class", "wall").each(fillEmptyRooms);
+.point.selected {
+  fill: red;
+  fill-opacity: 1;
+}
 
-      // top to bottom
-      svg.selectAll(".tb")
-        .attr("height", function (d) {
-        return d.h = d.h + v;
-      }).filter(function (d) {
-        return d.y + d.h >= h || wallAhead(d.x, d.y + (d.h - d.h % sz));
-      }).attr("class", "wall").each(fillEmptyRooms);
+.node {
+  fill: none;
+  stroke: #ccc;
+  shape-rendering: crispEdges;
+}
 
-      // right to left
-      svg.selectAll(".rl")
-        .attr("x", function (d) {
-          return d.x = d.x - v;
-        })
-        .attr("width", function (d) {
-          return d.w = d.w + v;
-        })
-        .filter(function (d) {
-          return d.x <= 0 || wallAhead(d.x - d.x % sz, d.y);
-        })
-        .attr("class", "wall").each(fillEmptyRooms);
+.brush .extent {
+  stroke: #fff;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}
 
-      force.resume();
-    });
 
-    function fillEmptyRooms(d) {
-      d.x = Math.round(d.x / sz) * sz;
-      d.y = Math.round(d.y / sz) * sz;
-      d.w = Math.round(d.w / sz) * sz;
-      d.h = Math.round(d.h / sz) * sz;
-      var cells = d3.selectAll(".cell");
-      var xmax = d.x + d.w;
-      var ymax = d.y + d.h
-      for (var x = d.x; x < xmax; x += sz) {
-        for (var y = d.y; y < ymax; y += sz) {
-          cells.filter(function (d) {
-            return d.x == x && d.y == y;
-          }).attr("class", "blackcell");
-        }
-      }
-      var pending = d3.selectAll(".cell").attr("class", "pending");
-      var balls = d3.selectAll(".ball").each(function (d) {
-        var x = d.x - d.x % sz;
-        var y = d.y - d.y % sz;
-        pending.filter(function (d) {
-          return y == d.y && x == d.x;
-        }).attr("class", "cell")
-          .each(function (c) {
-          c.visited = true;
-          visit(pending, c.x, c.y);
-        });
-      });
-      d3.selectAll(".pending").attr("class", "blackcell");
-      d3.selectAll(".cell").each(function (d) {
-        d.visited = false;
-      });
+
+form {
+  position: absolute;
+  top: 1em;
+  left: 1em;
+}
+
+
+
+rect {
+  fill: none;
+  pointer-events: all;
+}
+
+
+.cell {
+}
+
+.cell.wall {
+  fill: #000;
+}
+
+.cell.air {
+  fill: none;
+  stroke: #333;
+  stroke-opacity: .2;
+}
+
+.cell.blue {
+  stroke: blue;
+  stroke-opacity: 1;
+}
+
+.cell.red {
+  stroke: red;
+  stroke-opacity: 1;
+}
+
+.ball {
+  fill: red;
+  stroke: #333;
+  stroke-opacity: .5;
+  stroke-width: 2;
+}
+
+.builder.head {
+  stroke: #333;
+  stroke-opacity: .5;
+  stroke-width: 2;
+}
+
+.builder.blue {
+  fill: blue;
+}
+
+.builder.red {
+  fill: red;
+}
+
+.builder.tail {
+  fill-opacity: .4;
+}
+
+
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<form><input id="switch" type="button" value="V" /></form>
+<script>
+
+var w = 960,
+    h = 500,
+    sz = 20,
+    r = sz / 2,
+    v = 2;
+
+var rows = Math.ceil(h / sz);
+var cols = Math.ceil(w / sz);
+
+var s = true;
+d3.select("#switch").on("click", function(e) { s = !s; d3.select("#switch").attr("value", s ? "V" : "H"); });
+
+var cells = d3.range(0, rows * cols).map(function (d) {
+  return {
+    x: (d % cols) * sz + r,
+    y: (Math.floor(d / cols) % rows) * sz + r
+  };
+});
+
+var svg = d3.select("body").append("svg")
+    .attr("width", w)
+    .attr("height", h);
+
+var rectx = function(d) { return d.x - r; };
+var recty = function(d) { return d.y - r; };
+
+var tailx = function(d) { return d.dx > 0 ? d.sx - r : rectx(d) - d.dx * sz; };
+var taily = function(d) { return d.dy > 0 ? d.sy - r : recty(d) - d.dy * sz; };
+var tailw = function(d) { return d.dx == 0 ? sz : d.sz = (d.x - d.sx) * d.dx; };
+var tailh = function(d) { return d.dy == 0 ? sz : d.sz = (d.y - d.sy) * d.dy; };
+
+var blue, red;
+var cell = svg.selectAll(".cell")
+  .data(cells)
+  .enter().append("rect")
+  .attr("class", function(d) { return "cell " + ((d.isWall = d.x == r || d.x == w - r || d.y == r || d.y == h - r) ? "wall" : "air"); })
+  .attr("x", rectx)
+  .attr("y", recty)
+  .attr("width", sz)
+  .attr("height", sz)
+  .on("mouseover", function(c1) {
+    var p = d3.mouse(this);
+    var dx = s ? (p[0] - c1.x > 0 ? 1 : -1) : 0;
+    var dy = s ? 0 : (p[1] - c1.y > 0 ? 1 : -1); 
+    var a = d3.select(this);
+    var b = svg.selectAll(".cell").filter(function(c2) { return c2.x == c1.x + sz * dx && c2.y == c1.y + sz * dy; });
+    if (dx + dy > 0) {
+      blue = a;
+      red = b;
+    } else {
+      blue = b;
+      red = a;
     }
-    balls.forEach(function (b) {
-      svg.append("svg:circle")
-        .data([b])
-        .attr("class", "ball")
-        .attr("cx", function (d) {
-        return d.x;
-      })
-        .attr("cy", function (d) {
-        return d.y;
-      })
-        .attr("r", r);
-      force.nodes().push(b);
+    blue.classed("blue", true);
+    red.classed("red", true);
+  }).on("mouseout", function(c1) {
+    blue.classed("blue", false);
+    red.classed("red", false);
+  }).on("click", function() {
+    var dx = s ? 1 : 0;
+    var dy = s ? 0 : 1; 
+    blue.each(function(d) { startWall(d, "blue", -dx, -dy); });
+    red.each(function(d) { startWall(d, "red", dx, dy); });
+  });
+
+var ball1 = {
+    x: (w / 2),
+    y: (h / 2),
+    px: (w / 2 - v),
+    py: (h / 2 - v)
+  },
+  ball2 = {
+    x: (w / 2),
+    y: (h / 2),
+    px: (w / 2 + v),
+    py: (h / 2 + v)
+  };
+
+var balls = [ball1, ball2];
+
+var force = d3.layout.force()
+  .gravity(0)
+  .charge(0)
+  .friction(1)
+  .size([w, h]);
+
+balls.forEach(function (b) {
+  svg.append("svg:circle")
+    .data([b])
+    .attr("class", "ball")
+    .attr("cx", function (d) {
+    return d.x;
+  })
+    .attr("cy", function (d) {
+    return d.y;
+  })
+    .attr("r", r);
+  force.nodes().push(b);
+});
+
+force.on("tick", function () {
+  var tail = svg.selectAll(".tail");
+  var wall = svg.selectAll(".cell.wall");
+  var air = svg.selectAll(".cell.air");
+  var head = svg.selectAll(".head");
+  var ball = svg.selectAll(".ball");
+  
+  var wallWasBuilt = false;
+  
+  head.attr("x", function(d) { d.x += d.dx * v; return rectx(d); })
+    .attr("y", function(d) { d.y += d.dy * v; return recty(d); })
+    .each(function(d) {
+      svg.select("." + d.cl + ".tail")
+        .attr("x", tailx)
+        .attr("y", taily)
+        .attr("width", tailw)
+        .attr("height", tailh);
     });
+  head.filter(function(h) {
+      return !wall.filter(function(w) { return h.dx == 0 ? h.x == w.x && Math.abs(h.y - w.y) < sz : h.y == w.y && Math.abs(h.x - w.x) < sz; }).empty();
+    }).each(function(h) {
+      air.filter(function(a) {
+          return h.dx == 0 ? h.x == a.x && Math.min(h.sy, h.y) <= a.y && a.y <= Math.max(h.sy, h.y) : h.y == a.y && Math.min(h.sx, h.x) <= a.x && a.x <= Math.max(h.sx, h.x);
+        })
+        .classed("air", false)
+        .classed("wall", true);
+      tail.filter("." + h.cl)
+        .remove();
+      wallWasBuilt = true;
+    }).remove();
+  
+  ball.attr("cx", function (d) { return d.x; })
+    .attr("cy", function (d) { return d.y; })
+    .each(function(b) {
+      if (wallWasBuilt) {
+        fillEmptyRooms();
+      }
+      
+      var p = sz * Math.max(2, v);
+      var x0 = b.x - p;
+      var y0 = b.y - p;
+      var x1 = b.x + p;
+      var y1 = b.y + p;
+      wall.filter(function(w) {
+          return x0 <= w.x && w.x <= x1 && y0 <= w.y && w.y <= y1;
+        })
+      .each(function(w) {
+        var cx = 0;
+        var cy = 0;
+        var dx = b.x - b.px;
+        var dy = b.y - b.py;
+        if (dx > 0 && intersect(b.px, b.py, b.x, b.y, w.x - sz, w.y - r, w.x - sz, w.y + r)) {
+          var m = w.x - sz;
+          var dx = b.px - b.x;
+          b.x = m - (b.x - m);
+          b.px = b.x - dx;
+          ++cx;
+        }
+        if (dx < 0 && intersect(b.px, b.py, b.x, b.y, w.x + sz, w.y - r, w.x + sz, w.y + r)) {
+          var m = w.x + sz;
+          var dx = b.px - b.x;
+          b.x = m + (m - b.x);
+          b.px = b.x - dx;
+          ++cx;
+        }
+        if (dy > 0 && intersect(b.px, b.py, b.x, b.y, w.x - r, w.y - sz, w.x + r, w.y - sz)) {
+          var m = w.y - sz;
+          var dy = b.py - b.y;
+          b.y = m - (b.y - m);
+          b.py = b.y - dy;
+          ++cy;
+        }
+        if (dy < 0 && intersect(b.px, b.py, b.x, b.y, w.x - r, w.y + sz, w.x + r, w.y + sz)) {
+          var m = w.y + sz;
+          var dy = b.py - b.y;
+          b.y = m + (m - b.y);
+          b.py = b.y - dy;
+          ++cy;
+        }
+        if (cx + cy > 1) {
+          console.log("coince");
+          b.px = b.x = b.x - b.x % sz + r;
+          b.py = b.y = b.y - b.y % sz + r;
+        }
+      });
+      
+      tail.filter(function(t) {
+          var w = tailw(t);
+          var h = tailh(t);
+          if (w == 0 || h == 0) {
+            return false;
+          }
+          var x0 = tailx(t);
+          var x1 = tailx(t) + w;
+          var y0 = taily(t);
+          var y1 = taily(t) + h;
+          return intersect(b.px, b.py, b.x, b.y, x0 - r, y0, x0 - r, y1)
+              || intersect(b.px, b.py, b.x, b.y, x1 + r, y0, x1 + r, y1)
+              || intersect(b.px, b.py, b.x, b.y, x0, y0 - r, x1, y0 - r)
+              || intersect(b.px, b.py, b.x, b.y, x0, y1 + r, x1, y1 + r);
+        })
+      .each(function(t) {
+          svg.selectAll(".head." + t.cl).remove();
+        })
+      .remove();
+    });
+  
+  force.resume();
+});
 
-    force.start();
+force.start();
 
-    function visit(cells, x, y) {
-      cells
+function fillEmptyRooms() {
+  d3.selectAll(".cell.air")
+    .each(function (d) {
+      d.visited = false;
+    });
+  
+  var pending = d3.selectAll(".cell.air")
+    .classed("pending", true);
+  
+  svg.selectAll(".ball")
+    .each(function (d) {
+      var x = rectx(d) - rectx(d) % sz;
+      var y = recty(d) - recty(d) % sz;
+      pending
         .filter(function (d) {
+            return y == recty(d) && x == rectx(d);
+          })
+        .classed("pending", false)
+        .each(function (c) {
+            c.visited = true;
+            visit(pending, c.x, c.y);
+          });
+    });
+  
+  d3.selectAll(".pending")
+    .classed("wall", true)
+    .classed("air", false);
+}
+
+function visit(cells, x, y) {
+  cells
+    .filter(function (d) {
         return !d.visited && ((y == d.y && (x - sz == d.x || d.x == x + sz)) || (x == d.x && (y - sz == d.y || d.y == y + sz)));
       })
-        .attr("class", "cell")
-        .each(function (c) {
+    .classed("pending", false)
+    .each(function (c) {
         c.visited = true;
         visit(cells, c.x, c.y);
       });
-    }
+}
 
-    function intersect(a1, a2, b1, b2) {
-      var ua_t = (b2.x - b1.x) * (a1.y - b1.y) - (b2.y - b1.y) * (a1.x - b1.x);
-      var ub_t = (a2.x - a1.x) * (a1.y - b1.y) - (a2.y - a1.y) * (a1.x - b1.x);
-      var u_b = (b2.y - b1.y) * (a2.x - a1.x) - (b2.x - b1.x) * (a2.y - a1.y);
+function startWall(cell, cl, dx, dy) {
+  var wallHead = {
+    sx: cell.x,
+    sy: cell.y,
+    x: cell.x,
+    y: cell.y,
+    dx: dx,
+    dy: dy,
+    cl: cl
+  };
+  if (svg.selectAll("." + cl + ".head").empty()) {
+    svg.selectAll("." + cl + ".head")
+      .data([wallHead]).enter().append("rect")
+      .classed("builder", true)
+      .classed(cl, true)
+      .classed("head", true)
+      .attr("x", rectx)
+      .attr("y", recty)
+      .attr("width", sz)
+      .attr("height", sz);
+    var tail = svg.selectAll("." + cl + ".tail")
+      .data([wallHead]);
+    tail.enter().append("rect")
+      .classed("builder", true)
+      .classed(cl, true)
+      .classed("tail", true)
+      .classed("wall", true)
+      .attr("x", tailx)
+      .attr("y", taily)
+      .attr("width", tailw)
+      .attr("height", tailh);
+    tail.exit().remove();
+  }
+}
 
-      if (u_b != 0) {
-        var ua = ua_t / u_b;
-        var ub = ub_t / u_b;
+function intersect(a1x, a1y, a2x, a2y, b1x, b1y, b2x, b2y) {
+  var ua_t = (b2x - b1x) * (a1y - b1y) - (b2y - b1y) * (a1x - b1x);
+  var ub_t = (a2x - a1x) * (a1y - b1y) - (a2y - a1y) * (a1x - b1x);
+  var u_b = (b2y - b1y) * (a2x - a1x) - (b2x - b1x) * (a2y - a1y);
 
-        return 0 <= ua && ua <= 1 && 0 <= ub && ub <= 1;
-      } else {
-        return true;
-      }
-    };
-  </script>
+  if (u_b != 0) {
+    var ua = ua_t / u_b;
+    var ub = ub_t / u_b;
+
+    return 0 <= ua && ua <= 1 && 0 <= ub && ub <= 1;
+  } else {
+    return true;
+  }
+}
+
+
+</script>
