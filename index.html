@@ -321,7 +321,7 @@ force.on("tick", function () {
       if (cc.isWall || (tc.isWall && bc.isWall) || (lc.isWall && rc.isWall)) {
         svg.selectAll(".cell")
           .filter(function(d) { return d.r == cc.r && d.c == cc.c; })
-          .classed("cell", true)
+          .classed("air", true)
           .classed("wall", false);
         b.px = b.x = cc.x;
         b.py = b.y = cc.y;
