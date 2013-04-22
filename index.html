@@ -172,14 +172,16 @@ var ball1 = {
     y: b1y,
     px: b1x + v,
     py: b1y + v,
-    id: 1
+    id: 1,
+    isMoving: true
   },
   ball2 = {
     x: b2x,
     y: b2y,
     px: b2x - v,
     py: b2y - v,
-    id: 2
+    id: 2,
+    isMoving: true
   };
 
 var balls = [ball1, ball2];
@@ -239,6 +241,10 @@ force.on("tick", function () {
   ball.attr("cx", function (d) { return d.x; })
     .attr("cy", function (d) { return d.y; })
     .each(function(b) {
+      if (!b.isMoving) {
+        return;
+      }
+      
       if (wallWasBuilt) {
         fillEmptyRooms();
       }
@@ -250,67 +256,76 @@ force.on("tick", function () {
       var cc = ballCell(b);
       var tc = topCell(cc);
       if (tc.isWall && dy < 0 && (d = b.y - tc.y) <= sz) {
-        b.y += (sz - d) * 2;
+        b.y += sz - d;
         b.py = b.y + dy * v;
       }
       var lc = leftCell(cc);
       if (lc.isWall && dx < 0 && (d = b.x - lc.x) <= sz) {
-        b.x += (sz - d) * 2;
+        b.x += sz - d;
         b.px = b.x + dx * v;
       }
       var bc = bottomCell(cc);
       if (bc.isWall && dy > 0 && (d = bc.y - b.y) <= sz) {
-        b.y -= (sz - d) * 2;
+        b.y -= sz - d;
         b.py = b.y + dy * v;
       }
       var rc = rightCell(cc);
       if (rc.isWall && dx > 0 && (d = rc.x - b.x) <= sz) {
-        b.x -= (sz - d) * 2;
+        b.x -= sz - d;
         b.px = b.x + dx * v;
       }
       var tlc = topLeftCell(cc);
       if (tlc.isWall && (d = (b.x - (tlc.x + r)) * (b.x - (tlc.x + r)) + (b.y - (tlc.y + r)) * (b.y - (tlc.y + r))) <= r * r) {
         if (dx < 0) {
-          b.x += (r - Math.sqrt(d)) * 2;
+          b.x += r - Math.sqrt(d);
           b.px = b.x + dx * v;
         }
         if (dy < 0) {
-          b.y += (r - Math.sqrt(d)) * 2;
+          b.y += r - Math.sqrt(d);
           b.py = b.y + dy * v;
         }
       }
       var blc = bottomLeftCell(cc);
       if (blc.isWall && (d = (b.x - (blc.x + r)) * (b.x - (blc.x + r)) + ((blc.y - r) - b.y) * ((blc.y - r) - b.y)) <= r * r) {
         if (dx < 0) {
-          b.x += (r - Math.sqrt(d)) * 2;
+          b.x += r - Math.sqrt(d);
           b.px = b.x + dx * v;
         }
         if (dy > 0) {
-          b.y -= (r - Math.sqrt(d)) * 2;
+          b.y -= r - Math.sqrt(d);
           b.py = b.y + dy * v;
         }
       }
       var brc = bottomRightCell(cc);
       if (brc.isWall && (d = ((brc.x - r) - b.x) * ((brc.x - r) - b.x) + ((brc.y - r) - b.y) * ((brc.y - r) - b.y)) <= r * r) {
         if (dx > 0) {
-          b.x -= (r - Math.sqrt(d)) * 2;
+          b.x -= r - Math.sqrt(d);
           b.px = b.x + dx * v;
         }
         if (dy > 0) {
-          b.y -= (r - Math.sqrt(d)) * 2;
+          b.y -= r - Math.sqrt(d);
           b.py = b.y + dy * v;
         }
       }
       var trc = topRightCell(cc);
       if (trc.isWall && (d = ((trc.x - r) - b.x) * ((trc.x - r) - b.x) + (b.y - (trc.y + r)) * (b.y - (trc.y + r))) <= r * r) {
         if (dx > 0) {
-          b.x -= (r - Math.sqrt(d)) * 2;
+          b.x -= r - Math.sqrt(d);
           b.px = b.x + dx * v;
         }
         if (dy < 0) {
-          b.y += (r - Math.sqrt(d)) * 2;
+          b.y += r - Math.sqrt(d);
           b.py = b.y + dy * v;
         }
+      }
+      if (cc.isWall || (tc.isWall && bc.isWall) || (lc.isWall && rc.isWall)) {
+        svg.selectAll(".cell")
+          .filter(function(d) { return d.r == cc.r && d.c == cc.c; })
+          .classed("cell", true)
+          .classed("wall", false);
+        b.px = b.x = cc.x;
+        b.py = b.y = cc.y;
+        cc.isWall = b.isMoving = false;
       }
       
       tail.filter(function(t) {
@@ -328,11 +343,11 @@ force.on("tick", function () {
               || intersect(b.px, b.py, b.x, b.y, x0, y0 - r, x1, y0 - r)
               || intersect(b.px, b.py, b.x, b.y, x0, y1 + r, x1, y1 + r);
         })
-      .each(function(t) {
-          svg.selectAll(".head." + t.cl).remove();
-        })
-      .remove();
-    });
+        .each(function(t) {
+            svg.selectAll(".head." + t.cl).remove();
+          })
+        .remove();
+      });
   
   force.resume();
 });
@@ -349,12 +364,11 @@ function fillEmptyRooms() {
     .classed("pending", true);
   
   svg.selectAll(".ball")
-    .each(function (d) {
-      var x = rectx(d) - rectx(d) % sz;
-      var y = recty(d) - recty(d) % sz;
+    .each(function (b) {
+      var cc = ballCell(b);
       pending
-        .filter(function (d) {
-            return y == recty(d) && x == rectx(d);
+        .filter(function (c) {
+            return cc.r == c.r && cc.c == c.c;
           })
         .classed("pending", false)
         .each(function (c) {
