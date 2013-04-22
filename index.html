@@ -63,6 +63,15 @@ rect {
 }
 
 
+.cell.debug1 {
+  fill: #0ff;
+  fill-opacity: 1;
+}
+.cell.debug2 {
+  fill: #10f;
+  fill-opacity: 1;
+}
+
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -73,7 +82,7 @@ var w = 960,
     h = 500,
     sz = 20,
     r = sz / 2,
-    v = 2;
+    v = 1.5;
 
 var rows = Math.ceil(h / sz);
 var cols = Math.ceil(w / sz);
@@ -82,9 +91,13 @@ var s = true;
 d3.select("#switch").on("click", function(e) { s = !s; d3.select("#switch").attr("value", s ? "V" : "H"); });
 
 var cells = d3.range(0, rows * cols).map(function (d) {
+  var col = d % cols;
+  var row = (d - col) / cols;
   return {
-    x: (d % cols) * sz + r,
-    y: (Math.floor(d / cols) % rows) * sz + r
+    r: row,
+    c: col,
+    x: col * sz + r,
+    y: row * sz + r
   };
 });
 
@@ -99,6 +112,22 @@ var tailx = function(d) { return d.dx > 0 ? d.sx - r : rectx(d) - d.dx * sz; };
 var taily = function(d) { return d.dy > 0 ? d.sy - r : recty(d) - d.dy * sz; };
 var tailw = function(d) { return d.dx == 0 ? sz : d.sz = (d.x - d.sx) * d.dx; };
 var tailh = function(d) { return d.dy == 0 ? sz : d.sz = (d.y - d.sy) * d.dy; };
+
+var ballCell = function(b) {
+  var row = (b.y - b.y % sz) / sz;
+  var col = (b.x - b.x % sz) / sz;
+  return cells[row * cols + col];
+};
+
+var topCell = function(c) { return cells[(c.r - 1) * cols + c.c]; };
+var leftCell = function(c) { return cells[c.r * cols + c.c - 1]; };
+var bottomCell = function(c) { return cells[(c.r + 1) * cols + c.c]; };
+var rightCell = function(c) { return cells[c.r * cols + c.c + 1]; };
+
+var topLeftCell = function(c) { return cells[(c.r - 1) * cols + c.c - 1]; };
+var bottomLeftCell = function(c) { return cells[(c.r + 1) * cols + c.c - 1]; };
+var bottomRightCell = function(c) { return cells[(c.r + 1) * cols + c.c + 1]; };
+var topRightCell = function(c) { return cells[(c.r - 1) * cols + c.c + 1]; };
 
 var blue, red;
 var cell = svg.selectAll(".cell")
@@ -134,17 +163,23 @@ var cell = svg.selectAll(".cell")
     red.each(function(d) { startWall(d, "red", dx, dy); });
   });
 
+var b1x = (w - sz * 4) * Math.random() + sz * 2;
+var b1y = (h - sz * 4) * Math.random() + sz * 2;
+var b2x = (w - sz * 4) * Math.random() + sz * 2;
+var b2y = (h - sz * 4) * Math.random() + sz * 2;
 var ball1 = {
-    x: (w / 2),
-    y: (h / 2),
-    px: (w / 2 - v),
-    py: (h / 2 - v)
+    x: b1x,
+    y: b1y,
+    px: b1x + v,
+    py: b1y + v,
+    id: 1
   },
   ball2 = {
-    x: (w / 2),
-    y: (h / 2),
-    px: (w / 2 + v),
-    py: (h / 2 + v)
+    x: b2x,
+    y: b2y,
+    px: b2x - v,
+    py: b2y - v,
+    id: 2
   };
 
 var balls = [ball1, ball2];
@@ -194,7 +229,8 @@ force.on("tick", function () {
           return h.dx == 0 ? h.x == a.x && Math.min(h.sy, h.y) <= a.y && a.y <= Math.max(h.sy, h.y) : h.y == a.y && Math.min(h.sx, h.x) <= a.x && a.x <= Math.max(h.sx, h.x);
         })
         .classed("air", false)
-        .classed("wall", true);
+        .classed("wall", true)
+        .each(function(d) { d.isWall = true; });
       tail.filter("." + h.cl)
         .remove();
       wallWasBuilt = true;
@@ -207,53 +243,75 @@ force.on("tick", function () {
         fillEmptyRooms();
       }
       
-      var p = sz * Math.max(2, v);
-      var x0 = b.x - p;
-      var y0 = b.y - p;
-      var x1 = b.x + p;
-      var y1 = b.y + p;
-      wall.filter(function(w) {
-          return x0 <= w.x && w.x <= x1 && y0 <= w.y && w.y <= y1;
-        })
-      .each(function(w) {
-        var cx = 0;
-        var cy = 0;
-        var dx = b.x - b.px;
-        var dy = b.y - b.py;
-        if (dx > 0 && intersect(b.px, b.py, b.x, b.y, w.x - sz, w.y - r, w.x - sz, w.y + r)) {
-          var m = w.x - sz;
-          var dx = b.px - b.x;
-          b.x = m - (b.x - m);
-          b.px = b.x - dx;
-          ++cx;
+      var dx = b.x - b.px > 0 ? 1 : -1;
+      var dy = b.y - b.py > 0 ? 1 : -1;
+      var d;
+      
+      var cc = ballCell(b);
+      var tc = topCell(cc);
+      if (tc.isWall && dy < 0 && (d = b.y - tc.y) <= sz) {
+        b.y += (sz - d) * 2;
+        b.py = b.y + dy * v;
+      }
+      var lc = leftCell(cc);
+      if (lc.isWall && dx < 0 && (d = b.x - lc.x) <= sz) {
+        b.x += (sz - d) * 2;
+        b.px = b.x + dx * v;
+      }
+      var bc = bottomCell(cc);
+      if (bc.isWall && dy > 0 && (d = bc.y - b.y) <= sz) {
+        b.y -= (sz - d) * 2;
+        b.py = b.y + dy * v;
+      }
+      var rc = rightCell(cc);
+      if (rc.isWall && dx > 0 && (d = rc.x - b.x) <= sz) {
+        b.x -= (sz - d) * 2;
+        b.px = b.x + dx * v;
+      }
+      var tlc = topLeftCell(cc);
+      if (tlc.isWall && (d = (b.x - (tlc.x + r)) * (b.x - (tlc.x + r)) + (b.y - (tlc.y + r)) * (b.y - (tlc.y + r))) <= r * r) {
+        if (dx < 0) {
+          b.x += (r - Math.sqrt(d)) * 2;
+          b.px = b.x + dx * v;
         }
-        if (dx < 0 && intersect(b.px, b.py, b.x, b.y, w.x + sz, w.y - r, w.x + sz, w.y + r)) {
-          var m = w.x + sz;
-          var dx = b.px - b.x;
-          b.x = m + (m - b.x);
-          b.px = b.x - dx;
-          ++cx;
+        if (dy < 0) {
+          b.y += (r - Math.sqrt(d)) * 2;
+          b.py = b.y + dy * v;
         }
-        if (dy > 0 && intersect(b.px, b.py, b.x, b.y, w.x - r, w.y - sz, w.x + r, w.y - sz)) {
-          var m = w.y - sz;
-          var dy = b.py - b.y;
-          b.y = m - (b.y - m);
-          b.py = b.y - dy;
-          ++cy;
+      }
+      var blc = bottomLeftCell(cc);
+      if (blc.isWall && (d = (b.x - (blc.x + r)) * (b.x - (blc.x + r)) + ((blc.y - r) - b.y) * ((blc.y - r) - b.y)) <= r * r) {
+        if (dx < 0) {
+          b.x += (r - Math.sqrt(d)) * 2;
+          b.px = b.x + dx * v;
         }
-        if (dy < 0 && intersect(b.px, b.py, b.x, b.y, w.x - r, w.y + sz, w.x + r, w.y + sz)) {
-          var m = w.y + sz;
-          var dy = b.py - b.y;
-          b.y = m + (m - b.y);
-          b.py = b.y - dy;
-          ++cy;
+        if (dy > 0) {
+          b.y -= (r - Math.sqrt(d)) * 2;
+          b.py = b.y + dy * v;
         }
-        if (cx + cy > 1) {
-          console.log("coince");
-          b.px = b.x = b.x - b.x % sz + r;
-          b.py = b.y = b.y - b.y % sz + r;
+      }
+      var brc = bottomRightCell(cc);
+      if (brc.isWall && (d = ((brc.x - r) - b.x) * ((brc.x - r) - b.x) + ((brc.y - r) - b.y) * ((brc.y - r) - b.y)) <= r * r) {
+        if (dx > 0) {
+          b.x -= (r - Math.sqrt(d)) * 2;
+          b.px = b.x + dx * v;
         }
-      });
+        if (dy > 0) {
+          b.y -= (r - Math.sqrt(d)) * 2;
+          b.py = b.y + dy * v;
+        }
+      }
+      var trc = topRightCell(cc);
+      if (trc.isWall && (d = ((trc.x - r) - b.x) * ((trc.x - r) - b.x) + (b.y - (trc.y + r)) * (b.y - (trc.y + r))) <= r * r) {
+        if (dx > 0) {
+          b.x -= (r - Math.sqrt(d)) * 2;
+          b.px = b.x + dx * v;
+        }
+        if (dy < 0) {
+          b.y += (r - Math.sqrt(d)) * 2;
+          b.py = b.y + dy * v;
+        }
+      }
       
       tail.filter(function(t) {
           var w = tailw(t);
@@ -307,7 +365,8 @@ function fillEmptyRooms() {
   
   d3.selectAll(".pending")
     .classed("wall", true)
-    .classed("air", false);
+    .classed("air", false)
+    .each(function(d) { d.isWall = true; });
 }
 
 function visit(cells, x, y) {
@@ -348,7 +407,6 @@ function startWall(cell, cl, dx, dy) {
       .classed("builder", true)
       .classed(cl, true)
       .classed("tail", true)
-      .classed("wall", true)
       .attr("x", tailx)
       .attr("y", taily)
       .attr("width", tailw)
