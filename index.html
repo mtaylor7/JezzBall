@@ -217,13 +217,13 @@ force.on("tick", function () {
       wallWasBuilt = true;
     }).remove();
   
+  if (wallWasBuilt) {
+    fillEmptyRooms();
+  }
+      
   ball.attr("cx", function (d) { return d.x; })
     .attr("cy", function (d) { return d.y; })
     .each(function(b) {
-      if (wallWasBuilt) {
-        fillEmptyRooms();
-      }
-      
       if (!b.isMoving) {
         return;
       }
