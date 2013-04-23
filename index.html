@@ -220,12 +220,12 @@ force.on("tick", function () {
   ball.attr("cx", function (d) { return d.x; })
     .attr("cy", function (d) { return d.y; })
     .each(function(b) {
-      if (!b.isMoving) {
-        return;
-      }
-      
       if (wallWasBuilt) {
         fillEmptyRooms();
+      }
+      
+      if (!b.isMoving) {
+        return;
       }
       
       var dx = b.x - b.px > 0 ? 1 : -1;
