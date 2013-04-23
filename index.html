@@ -41,13 +41,11 @@ rect {
   fill: red;
   stroke: #333;
   stroke-opacity: .5;
-  stroke-width: 2;
 }
 
 .builder.head {
   stroke: #333;
   stroke-opacity: .5;
-  stroke-width: 2;
 }
 
 .builder.blue {
@@ -62,16 +60,6 @@ rect {
   fill-opacity: .4;
 }
 
-
-.cell.debug1 {
-  fill: #0ff;
-  fill-opacity: 1;
-}
-.cell.debug2 {
-  fill: #10f;
-  fill-opacity: 1;
-}
-
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -82,7 +70,8 @@ var w = 960,
     h = 500,
     sz = 20,
     r = sz / 2,
-    v = 1.5;
+    v = 2,
+    n = 4;
 
 var rows = Math.ceil(h / sz);
 var cols = Math.ceil(w / sz);
@@ -100,6 +89,19 @@ var cells = d3.range(0, rows * cols).map(function (d) {
     y: row * sz + r
   };
 });
+var balls = d3.range(0, n).map(function (d) {
+    var bx = (w - sz * 4) * Math.random() + sz * 2;
+    var by = (h - sz * 4) * Math.random() + sz * 2;
+    var ball = {
+        x: bx,
+        y: by,
+        px: bx + v * (Math.random() > .5 ? 1 : -1),
+        py: by + v * (Math.random() > .5 ? 1 : -1),
+        id: d,
+        isMoving: true
+      };
+    return ball;
+  });
 
 var svg = d3.select("body").append("svg")
     .attr("width", w)
@@ -162,29 +164,6 @@ var cell = svg.selectAll(".cell")
     blue.each(function(d) { startWall(d, "blue", -dx, -dy); });
     red.each(function(d) { startWall(d, "red", dx, dy); });
   });
-
-var b1x = (w - sz * 4) * Math.random() + sz * 2;
-var b1y = (h - sz * 4) * Math.random() + sz * 2;
-var b2x = (w - sz * 4) * Math.random() + sz * 2;
-var b2y = (h - sz * 4) * Math.random() + sz * 2;
-var ball1 = {
-    x: b1x,
-    y: b1y,
-    px: b1x + v,
-    py: b1y + v,
-    id: 1,
-    isMoving: true
-  },
-  ball2 = {
-    x: b2x,
-    y: b2y,
-    px: b2x - v,
-    py: b2y - v,
-    id: 2,
-    isMoving: true
-  };
-
-var balls = [ball1, ball2];
 
 var force = d3.layout.force()
   .gravity(0)
@@ -275,7 +254,7 @@ force.on("tick", function () {
         b.px = b.x + dx * v;
       }
       var tlc = topLeftCell(cc);
-      if (tlc.isWall && (d = (b.x - (tlc.x + r)) * (b.x - (tlc.x + r)) + (b.y - (tlc.y + r)) * (b.y - (tlc.y + r))) <= r * r) {
+      if (!tc.isWall && !lc.isWall && tlc.isWall && (d = cornerSquareDistance(b, tlc.x + r, tlc.y + r)) <= r * r) {
         if (dx < 0) {
           b.x += r - Math.sqrt(d);
           b.px = b.x + dx * v;
@@ -286,7 +265,7 @@ force.on("tick", function () {
         }
       }
       var blc = bottomLeftCell(cc);
-      if (blc.isWall && (d = (b.x - (blc.x + r)) * (b.x - (blc.x + r)) + ((blc.y - r) - b.y) * ((blc.y - r) - b.y)) <= r * r) {
+      if (!bc.isWall && !lc.isWall && blc.isWall && (d = cornerSquareDistance(b, blc.x + r, blc.y - r)) <= r * r) {
         if (dx < 0) {
           b.x += r - Math.sqrt(d);
           b.px = b.x + dx * v;
@@ -297,7 +276,7 @@ force.on("tick", function () {
         }
       }
       var brc = bottomRightCell(cc);
-      if (brc.isWall && (d = ((brc.x - r) - b.x) * ((brc.x - r) - b.x) + ((brc.y - r) - b.y) * ((brc.y - r) - b.y)) <= r * r) {
+      if (!bc.isWall && !rc.isWall && brc.isWall && (d = cornerSquareDistance(b, brc.x - r, brc.y - r)) <= r * r) {
         if (dx > 0) {
           b.x -= r - Math.sqrt(d);
           b.px = b.x + dx * v;
@@ -308,7 +287,7 @@ force.on("tick", function () {
         }
       }
       var trc = topRightCell(cc);
-      if (trc.isWall && (d = ((trc.x - r) - b.x) * ((trc.x - r) - b.x) + (b.y - (trc.y + r)) * (b.y - (trc.y + r))) <= r * r) {
+      if (!tc.isWall && !rc.isWall && trc.isWall && (d = cornerSquareDistance(b, trc.x - r, trc.y + r)) <= r * r) {
         if (dx > 0) {
           b.x -= r - Math.sqrt(d);
           b.px = b.x + dx * v;
@@ -353,6 +332,12 @@ force.on("tick", function () {
 });
 
 force.start();
+
+function cornerSquareDistance(b, x, y) {
+  var w = x - b.x;
+  var h = y - b.y
+  return (w * w + h * h);
+}
 
 function fillEmptyRooms() {
   d3.selectAll(".cell.air")
