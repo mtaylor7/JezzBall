@@ -71,7 +71,7 @@ var w = 960,
     sz = 20,
     r = sz / 2,
     v = 2,
-    n = 4;
+    n = 1000;
 
 var rows = Math.ceil(h / sz);
 var cols = Math.ceil(w / sz);
@@ -135,7 +135,7 @@ var blue, red;
 var cell = svg.selectAll(".cell")
   .data(cells)
   .enter().append("rect")
-  .attr("class", function(d) { return "cell " + ((d.isWall = d.x == r || d.x == w - r || d.y == r || d.y == h - r) ? "wall" : "air"); })
+  .attr("class", function(d) { return "cell " + ((d.isWall = Math.random() < .2 || d.x == r || d.x == w - r || d.y == r || d.y == h - r) ? "wall" : "air"); })
   .attr("x", rectx)
   .attr("y", recty)
   .attr("width", sz)
@@ -228,75 +228,13 @@ force.on("tick", function () {
         return;
       }
       
-      var dx = b.x - b.px > 0 ? 1 : -1;
-      var dy = b.y - b.py > 0 ? 1 : -1;
-      var d;
+      detectCollisions(b);
       
       var cc = ballCell(b);
       var tc = topCell(cc);
-      if (tc.isWall && dy < 0 && (d = b.y - tc.y) <= sz) {
-        b.y += sz - d;
-        b.py = b.y + dy * v;
-      }
       var lc = leftCell(cc);
-      if (lc.isWall && dx < 0 && (d = b.x - lc.x) <= sz) {
-        b.x += sz - d;
-        b.px = b.x + dx * v;
-      }
       var bc = bottomCell(cc);
-      if (bc.isWall && dy > 0 && (d = bc.y - b.y) <= sz) {
-        b.y -= sz - d;
-        b.py = b.y + dy * v;
-      }
       var rc = rightCell(cc);
-      if (rc.isWall && dx > 0 && (d = rc.x - b.x) <= sz) {
-        b.x -= sz - d;
-        b.px = b.x + dx * v;
-      }
-      var tlc = topLeftCell(cc);
-      if (!tc.isWall && !lc.isWall && tlc.isWall && (d = cornerSquareDistance(b, tlc.x + r, tlc.y + r)) <= r * r) {
-        if (dx < 0) {
-          b.x += r - Math.sqrt(d);
-          b.px = b.x + dx * v;
-        }
-        if (dy < 0) {
-          b.y += r - Math.sqrt(d);
-          b.py = b.y + dy * v;
-        }
-      }
-      var blc = bottomLeftCell(cc);
-      if (!bc.isWall && !lc.isWall && blc.isWall && (d = cornerSquareDistance(b, blc.x + r, blc.y - r)) <= r * r) {
-        if (dx < 0) {
-          b.x += r - Math.sqrt(d);
-          b.px = b.x + dx * v;
-        }
-        if (dy > 0) {
-          b.y -= r - Math.sqrt(d);
-          b.py = b.y + dy * v;
-        }
-      }
-      var brc = bottomRightCell(cc);
-      if (!bc.isWall && !rc.isWall && brc.isWall && (d = cornerSquareDistance(b, brc.x - r, brc.y - r)) <= r * r) {
-        if (dx > 0) {
-          b.x -= r - Math.sqrt(d);
-          b.px = b.x + dx * v;
-        }
-        if (dy > 0) {
-          b.y -= r - Math.sqrt(d);
-          b.py = b.y + dy * v;
-        }
-      }
-      var trc = topRightCell(cc);
-      if (!tc.isWall && !rc.isWall && trc.isWall && (d = cornerSquareDistance(b, trc.x - r, trc.y + r)) <= r * r) {
-        if (dx > 0) {
-          b.x -= r - Math.sqrt(d);
-          b.px = b.x + dx * v;
-        }
-        if (dy < 0) {
-          b.y += r - Math.sqrt(d);
-          b.py = b.y + dy * v;
-        }
-      }
       if (cc.isWall || (tc.isWall && bc.isWall) || (lc.isWall && rc.isWall)) {
         svg.selectAll(".cell")
           .filter(function(d) { return d.r == cc.r && d.c == cc.c; })
@@ -332,6 +270,80 @@ force.on("tick", function () {
 });
 
 force.start();
+
+function detectCollisions(b) {
+  var dx = b.x - b.px > 0 ? 1 : -1;
+  var dy = b.y - b.py > 0 ? 1 : -1;
+  var d, sd;
+  
+  var cc = ballCell(b);
+  var tc = topCell(cc);
+  if (tc.isWall && dy < 0 && (d = b.y - tc.y) <= sz) {
+    bounceY(b, sz, d, dy);
+  }
+  var lc = leftCell(cc);
+  if (lc.isWall && dx < 0 && (d = b.x - lc.x) <= sz) {
+    bounceX(b, sz, d, dx);
+  }
+  var bc = bottomCell(cc);
+  if (bc.isWall && dy > 0 && (d = bc.y - b.y) <= sz) {
+    bounceY(b, sz, d, dy);
+  }
+  var rc = rightCell(cc);
+  if (rc.isWall && dx > 0 && (d = rc.x - b.x) <= sz) {
+    bounceX(b, sz, d, dx);
+  }
+  var tlc = topLeftCell(cc);
+  if (!tc.isWall && !lc.isWall && tlc.isWall && (sd = cornerSquareDistance(b, tlc.x + r, tlc.y + r)) <= r * r) {
+    d = Math.sqrt(sd);
+    if (dx < 0) {
+      bounceX(b, r, d, dx);
+    }
+    if (dy < 0) {
+      bounceY(b, r, d, dy);
+    }
+  }
+  var blc = bottomLeftCell(cc);
+  if (!bc.isWall && !lc.isWall && blc.isWall && (sd = cornerSquareDistance(b, blc.x + r, blc.y - r)) <= r * r) {
+    d = Math.sqrt(sd);
+    if (dx < 0) {
+      bounceX(b, r, d, dx);
+    }
+    if (dy > 0) {
+      bounceY(b, r, d, dy);
+    }
+  }
+  var brc = bottomRightCell(cc);
+  if (!bc.isWall && !rc.isWall && brc.isWall && (sd = cornerSquareDistance(b, brc.x - r, brc.y - r)) <= r * r) {
+    d = Math.sqrt(sd);
+    if (dx > 0) {
+      bounceX(b, r, d, dx);
+    }
+    if (dy > 0) {
+      bounceY(b, r, d, dy);
+    }
+  }
+  var trc = topRightCell(cc);
+  if (!tc.isWall && !rc.isWall && trc.isWall && (sd = cornerSquareDistance(b, trc.x - r, trc.y + r)) <= r * r) {
+    d = Math.sqrt(sd);
+    if (dx > 0) {
+      bounceX(b, r, d, dx);
+    }
+    if (dy < 0) {
+      bounceY(b, r, d, dy);
+    }
+  }
+}
+
+function bounceX(b, m, d, dx) {
+  b.x -= (m - d) * dx;
+  b.px = b.x + dx * v;
+}
+
+function bounceY(b, m, d, dy) {
+  b.y -= (m - d) * dy;
+  b.py = b.y + dy * v;
+}
 
 function cornerSquareDistance(b, x, y) {
   var w = x - b.x;
