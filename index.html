@@ -71,7 +71,7 @@ var w = 960,
     sz = 20,
     r = sz / 2,
     v = 2,
-    n = 4;
+    n = 3;
 
 var rows = Math.ceil(h / sz);
 var cols = Math.ceil(w / sz);
@@ -277,7 +277,7 @@ function detectCollisions(b) {
   
   // wall corners collision
   var tlc = topLeftCell(cc);
-  if (!tc.isWall && !lc.isWall && tlc.isWall && (sd = cornerSquareDistance(b, tlc.x + r, tlc.y + r)) <= r * r) {
+  if (!tc.isWall && !lc.isWall && tlc.isWall && (sd = cornerSquareDistance(b.x, b.y, tlc.x + r, tlc.y + r)) <= r * r) {
     d = Math.sqrt(sd);
     if (dx < 0) {
       bounceX(b, r, d, dx);
@@ -287,7 +287,7 @@ function detectCollisions(b) {
     }
   }
   var blc = bottomLeftCell(cc);
-  if (!bc.isWall && !lc.isWall && blc.isWall && (sd = cornerSquareDistance(b, blc.x + r, blc.y - r)) <= r * r) {
+  if (!bc.isWall && !lc.isWall && blc.isWall && (sd = cornerSquareDistance(b.x, b.y, blc.x + r, blc.y - r)) <= r * r) {
     d = Math.sqrt(sd);
     if (dx < 0) {
       bounceX(b, r, d, dx);
@@ -297,7 +297,7 @@ function detectCollisions(b) {
     }
   }
   var brc = bottomRightCell(cc);
-  if (!bc.isWall && !rc.isWall && brc.isWall && (sd = cornerSquareDistance(b, brc.x - r, brc.y - r)) <= r * r) {
+  if (!bc.isWall && !rc.isWall && brc.isWall && (sd = cornerSquareDistance(b.x, b.y, brc.x - r, brc.y - r)) <= r * r) {
     d = Math.sqrt(sd);
     if (dx > 0) {
       bounceX(b, r, d, dx);
@@ -307,7 +307,7 @@ function detectCollisions(b) {
     }
   }
   var trc = topRightCell(cc);
-  if (!tc.isWall && !rc.isWall && trc.isWall && (sd = cornerSquareDistance(b, trc.x - r, trc.y + r)) <= r * r) {
+  if (!tc.isWall && !rc.isWall && trc.isWall && (sd = cornerSquareDistance(b.x, b.y, trc.x - r, trc.y + r)) <= r * r) {
     d = Math.sqrt(sd);
     if (dx > 0) {
       bounceX(b, r, d, dx);
@@ -317,7 +317,7 @@ function detectCollisions(b) {
     }
   }
 
-  // tail collition
+  // tail collision
   svg.selectAll(".tail").filter(function(t) {
       var w = tailw(t);
       var h = tailh(t);
@@ -332,6 +332,31 @@ function detectCollisions(b) {
         svg.selectAll(".head." + t.cl).remove();
       })
     .remove();
+
+  // ball collision
+  svg.selectAll(".ball").each(function(b2) {
+      if (b.id == b2.id) {
+        return;
+      }
+      var sd = cornerSquareDistance(b.x, b.y, b2.x, b2.y);
+      if (sd <= sz * sz) {
+        var dx2 = b2.x - b2.px > 0 ? 1 : -1;
+        var dy2 = b2.y - b2.py > 0 ? 1 : -1;
+        var d = Math.sqrt(sd);
+        if ((b2.x - b.x) * dx > r / 2) {
+          bounceX(b, sz, d, dx);
+        }
+        if ((b.x - b2.x) * dx2 > r / 2) {
+          bounceX(b2, sz, d, dx2);
+        }
+        if ((b2.y - b.y) * dy > r / 2) {
+          bounceY(b, sz, d, dy);
+        }
+        if ((b.y - b2.y) * dy2 > r / 2) {
+          bounceY(b2, sz, d, dy2);
+        }
+      }
+    });
 }
 
 function bounceX(b, m, d, dx) {
@@ -344,9 +369,9 @@ function bounceY(b, m, d, dy) {
   b.py = b.y + dy * v;
 }
 
-function cornerSquareDistance(b, x, y) {
-  var w = x - b.x;
-  var h = y - b.y
+function cornerSquareDistance(x0, y0, x1, y1) {
+  var w = x1 - x0;
+  var h = y1 - y0;
   return (w * w + h * h);
 }
 
