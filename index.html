@@ -209,12 +209,6 @@ force.on("tick", function () {
   ball.attr("cx", function (d) { return d.x; })
     .attr("cy", function (d) { return d.y; })
     .each(function(b) {
-      if (!b.isMoving) {
-        return;
-      }
-      
-      detectCollisions(b);
-      
       var cc = ballCell(b);
       var tc = topCell(cc);
       var lc = leftCell(cc);
@@ -229,6 +223,8 @@ force.on("tick", function () {
         b.py = b.y = cc.y;
         cc.isWall = b.isMoving = false;
       }
+      
+      detectCollisions(b);
   });
   
   head.filter(function(h) {
@@ -419,13 +415,17 @@ function detectCollisions(b) {
 }
 
 function bounceX(b, m, d, dx) {
-  b.x -= (m - d) * dx;
-  b.px = b.x + dx * v;
+  if (b.isMoving) {
+    b.x -= (m - d) * dx;
+    b.px = b.x + dx * v;
+  }
 }
 
 function bounceY(b, m, d, dy) {
-  b.y -= (m - d) * dy;
-  b.py = b.y + dy * v;
+  if (b.isMoving) {
+    b.y -= (m - d) * dy;
+    b.py = b.y + dy * v;
+  }
 }
 
 function cornerSquareDistance(x0, y0, x1, y1) {
