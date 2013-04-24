@@ -22,8 +22,8 @@ rect {
 }
 
 .cell.air {
-  fill: none;
-  stroke: #333;
+  fill: #ddd;
+  stroke: #000;
   stroke-opacity: .2;
 }
 
@@ -70,6 +70,8 @@ var w = 960,
     h = 500,
     sz = 20,
     r = sz / 2,
+    sr = r * r,
+    ssz = sz * sz,
     v = 2,
     n = 3;
 
@@ -203,23 +205,6 @@ force.on("tick", function () {
         .attr("width", tailw)
         .attr("height", tailh);
     });
-  head.filter(function(h) {
-      return !wall.filter(function(w) { return h.dx == 0 ? h.x == w.x && Math.abs(h.y - w.y) < sz : h.y == w.y && Math.abs(h.x - w.x) < sz; }).empty();
-    }).each(function(h) {
-      air.filter(function(a) {
-          return h.dx == 0 ? h.x == a.x && Math.min(h.sy, h.y) <= a.y && a.y <= Math.max(h.sy, h.y) : h.y == a.y && Math.min(h.sx, h.x) <= a.x && a.x <= Math.max(h.sx, h.x);
-        })
-        .classed("air", false)
-        .classed("wall", true)
-        .each(function(d) { d.isWall = true; });
-      tail.filter("." + h.cl)
-        .remove();
-      wallWasBuilt = true;
-    }).remove();
-  
-  if (wallWasBuilt) {
-    fillEmptyRooms();
-  }
       
   ball.attr("cx", function (d) { return d.x; })
     .attr("cy", function (d) { return d.y; })
@@ -245,6 +230,24 @@ force.on("tick", function () {
         cc.isWall = b.isMoving = false;
       }
   });
+  
+  head.filter(function(h) {
+      return !wall.filter(function(w) { return h.dx == 0 ? h.x == w.x && Math.abs(h.y - w.y) < sz : h.y == w.y && Math.abs(h.x - w.x) < sz; }).empty();
+    }).each(function(h) {
+      air.filter(function(a) {
+          return h.dx == 0 ? h.x == a.x && Math.min(h.sy, h.y) <= a.y && a.y <= Math.max(h.sy, h.y) : h.y == a.y && Math.min(h.sx, h.x) <= a.x && a.x <= Math.max(h.sx, h.x);
+        })
+        .classed("air", false)
+        .classed("wall", true)
+        .each(function(d) { d.isWall = true; });
+      tail.filter("." + h.cl)
+        .remove();
+      wallWasBuilt = true;
+    }).remove();
+  
+  if (wallWasBuilt) {
+    fillEmptyRooms();
+  }
   
   force.resume();
 });
@@ -277,7 +280,7 @@ function detectCollisions(b) {
   
   // wall corners collision
   var tlc = topLeftCell(cc);
-  if (!tc.isWall && !lc.isWall && tlc.isWall && (sd = cornerSquareDistance(b.x, b.y, tlc.x + r, tlc.y + r)) <= r * r) {
+  if (!tc.isWall && !lc.isWall && tlc.isWall && (sd = cornerSquareDistance(b.x, b.y, tlc.x + r, tlc.y + r)) <= sr) {
     d = Math.sqrt(sd);
     if (dx < 0) {
       bounceX(b, r, d, dx);
@@ -287,7 +290,7 @@ function detectCollisions(b) {
     }
   }
   var blc = bottomLeftCell(cc);
-  if (!bc.isWall && !lc.isWall && blc.isWall && (sd = cornerSquareDistance(b.x, b.y, blc.x + r, blc.y - r)) <= r * r) {
+  if (!bc.isWall && !lc.isWall && blc.isWall && (sd = cornerSquareDistance(b.x, b.y, blc.x + r, blc.y - r)) <= sr) {
     d = Math.sqrt(sd);
     if (dx < 0) {
       bounceX(b, r, d, dx);
@@ -297,7 +300,7 @@ function detectCollisions(b) {
     }
   }
   var brc = bottomRightCell(cc);
-  if (!bc.isWall && !rc.isWall && brc.isWall && (sd = cornerSquareDistance(b.x, b.y, brc.x - r, brc.y - r)) <= r * r) {
+  if (!bc.isWall && !rc.isWall && brc.isWall && (sd = cornerSquareDistance(b.x, b.y, brc.x - r, brc.y - r)) <= sr) {
     d = Math.sqrt(sd);
     if (dx > 0) {
       bounceX(b, r, d, dx);
@@ -307,7 +310,7 @@ function detectCollisions(b) {
     }
   }
   var trc = topRightCell(cc);
-  if (!tc.isWall && !rc.isWall && trc.isWall && (sd = cornerSquareDistance(b.x, b.y, trc.x - r, trc.y + r)) <= r * r) {
+  if (!tc.isWall && !rc.isWall && trc.isWall && (sd = cornerSquareDistance(b.x, b.y, trc.x - r, trc.y + r)) <= sr) {
     d = Math.sqrt(sd);
     if (dx > 0) {
       bounceX(b, r, d, dx);
@@ -339,7 +342,7 @@ function detectCollisions(b) {
         return;
       }
       var sd = cornerSquareDistance(b.x, b.y, b2.x, b2.y);
-      if (sd <= sz * sz) {
+      if (sd <= ssz) {
         var dx2 = b2.x - b2.px > 0 ? 1 : -1;
         var dy2 = b2.y - b2.py > 0 ? 1 : -1;
         var d = Math.sqrt(sd);
