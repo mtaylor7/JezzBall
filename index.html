@@ -346,16 +346,16 @@ function detectCollisions(b) {
         var dx2 = b2.x - b2.px > 0 ? 1 : -1;
         var dy2 = b2.y - b2.py > 0 ? 1 : -1;
         var d = Math.sqrt(sd);
-        if ((b2.x - b.x) * dx > r / 2) {
+        if (b.isMoving && (b2.x - b.x) * dx > r / 2) {
           bounceX(b, sz, d, dx);
         }
-        if ((b.x - b2.x) * dx2 > r / 2) {
+        if (b2.isMoving && (b.x - b2.x) * dx2 > r / 2) {
           bounceX(b2, sz, d, dx2);
         }
-        if ((b2.y - b.y) * dy > r / 2) {
+        if (b.isMoving && (b2.y - b.y) * dy > r / 2) {
           bounceY(b, sz, d, dy);
         }
-        if ((b.y - b2.y) * dy2 > r / 2) {
+        if (b2.isMoving && (b.y - b2.y) * dy2 > r / 2) {
           bounceY(b2, sz, d, dy2);
         }
       }
