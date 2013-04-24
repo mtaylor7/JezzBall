@@ -23,8 +23,7 @@ rect {
 
 .cell.air {
   fill: #ddd;
-  stroke: #000;
-  stroke-opacity: .2;
+  stroke: #999;
 }
 
 .cell.blue {
@@ -38,7 +37,8 @@ rect {
 }
 
 .ball {
-  fill: red;
+  fill: #f00;
+  fill-opacity: 1;
   stroke: #333;
   stroke-opacity: .5;
 }
@@ -73,7 +73,7 @@ var w = 960,
     sr = r * r,
     ssz = sz * sz,
     v = 2,
-    n = 3;
+    n = 10;
 
 var rows = Math.ceil(h / sz);
 var cols = Math.ceil(w / sz);
