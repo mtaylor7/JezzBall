@@ -244,27 +244,7 @@ force.on("tick", function () {
         b.py = b.y = cc.y;
         cc.isWall = b.isMoving = false;
       }
-      
-      tail.filter(function(t) {
-          var w = tailw(t);
-          var h = tailh(t);
-          if (w == 0 || h == 0) {
-            return false;
-          }
-          var x0 = tailx(t);
-          var x1 = tailx(t) + w;
-          var y0 = taily(t);
-          var y1 = taily(t) + h;
-          return intersect(b.px, b.py, b.x, b.y, x0 - r, y0, x0 - r, y1)
-              || intersect(b.px, b.py, b.x, b.y, x1 + r, y0, x1 + r, y1)
-              || intersect(b.px, b.py, b.x, b.y, x0, y0 - r, x1, y0 - r)
-              || intersect(b.px, b.py, b.x, b.y, x0, y1 + r, x1, y1 + r);
-        })
-        .each(function(t) {
-            svg.selectAll(".head." + t.cl).remove();
-          })
-        .remove();
-      });
+  });
   
   force.resume();
 });
@@ -276,6 +256,7 @@ function detectCollisions(b) {
   var dy = b.y - b.py > 0 ? 1 : -1;
   var d, sd;
   
+  // wall borders collision
   var cc = ballCell(b);
   var tc = topCell(cc);
   if (tc.isWall && dy < 0 && (d = b.y - tc.y) <= sz) {
@@ -293,6 +274,8 @@ function detectCollisions(b) {
   if (rc.isWall && dx > 0 && (d = rc.x - b.x) <= sz) {
     bounceX(b, sz, d, dx);
   }
+  
+  // wall corners collision
   var tlc = topLeftCell(cc);
   if (!tc.isWall && !lc.isWall && tlc.isWall && (sd = cornerSquareDistance(b, tlc.x + r, tlc.y + r)) <= r * r) {
     d = Math.sqrt(sd);
@@ -333,6 +316,22 @@ function detectCollisions(b) {
       bounceY(b, r, d, dy);
     }
   }
+
+  // tail collition
+  svg.selectAll(".tail").filter(function(t) {
+      var w = tailw(t);
+      var h = tailh(t);
+      var x0 = tailx(t);
+      var x1 = x0 + w;
+      var y0 = taily(t);
+      var y1 = y0 + h;
+      
+      return x0 - r < b.x && b.x < x1 - r && y0 - r < b.y && b.y < y1 + r;
+    })
+    .each(function(t) {
+        svg.selectAll(".head." + t.cl).remove();
+      })
+    .remove();
 }
 
 function bounceX(b, m, d, dx) {
@@ -425,21 +424,5 @@ function startWall(cell, cl, dx, dy) {
     tail.exit().remove();
   }
 }
-
-function intersect(a1x, a1y, a2x, a2y, b1x, b1y, b2x, b2y) {
-  var ua_t = (b2x - b1x) * (a1y - b1y) - (b2y - b1y) * (a1x - b1x);
-  var ub_t = (a2x - a1x) * (a1y - b1y) - (a2y - a1y) * (a1x - b1x);
-  var u_b = (b2y - b1y) * (a2x - a1x) - (b2x - b1x) * (a2y - a1y);
-
-  if (u_b != 0) {
-    var ua = ua_t / u_b;
-    var ub = ub_t / u_b;
-
-    return 0 <= ua && ua <= 1 && 0 <= ub && ub <= 1;
-  } else {
-    return true;
-  }
-}
-
 
 </script>
