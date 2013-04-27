@@ -3,12 +3,6 @@
 <title>D3 JezzBall</title>
 <style>
 
-form {
-  position: absolute;
-  top: 1em;
-  left: 1em;
-}
-
 rect {
   fill: none;
   pointer-events: all;
@@ -63,7 +57,11 @@ rect {
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
-<form><input id="switch" type="button" value="V" /></form>
+<form>
+  <input id="switchOrientationButton" type="button" value="V" />
+  <input id="nextLevelButton" type="button" value="Next level" />
+  <input id="playAgainButton" type="button" value="Play again" />
+</form>
 <script>
 
 
@@ -73,7 +71,12 @@ d3.selection.prototype.size = function() {
     return n;
   };
 
-
+var level = 1;
+window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+		if (key == "level") {
+		  level = +value;
+		}
+	});
 
 var w = 960,
     h = 500,
@@ -82,13 +85,30 @@ var w = 960,
     sr = r * r,
     ssz = sz * sz,
     v = 3,
-    n = 3;
+    n = level + 1,
+    t = 5000;
 
 var rows = Math.ceil(h / sz);
 var cols = Math.ceil(w / sz);
 
-var s = true;
-d3.select("#switch").on("click", function(e) { s = !s; d3.select("#switch").attr("value", s ? "V" : "H"); });
+var s = false;
+d3.select("#switchOrientationButton")
+  .style("position", "absolute")
+  .style("top", "0px")
+  .style("left", "0px")
+  .on("click", function(e) { s = !s; d3.select("#switchOrientationButton").attr("value", s ? "H" : "V"); });
+d3.select("#nextLevelButton")
+  .style("position", "absolute")
+  .style("top", Math.round(h / 2 - 10) + "px")
+  .style("left", Math.round(w / 2 - 50) + "px")
+  .style("visibility", "hidden")
+  .on("click", function(e) { window.location.href = "test2.html?level=" + (level + 1); });
+d3.select("#playAgainButton")
+  .style("position", "absolute")
+  .style("top", Math.round(h / 2 - 10) + "px")
+  .style("left", Math.round(w / 2 - 50) + "px")
+  .style("visibility", "hidden")
+  .on("click", function(e) { window.location.href = "test2.html"; });
 
 var cells = d3.range(0, rows * cols).map(function (d) {
   var col = d % cols;
@@ -170,7 +190,7 @@ var cell = svg.selectAll(".cell")
     blue.classed("blue", false);
     red.classed("red", false);
   }).on("click", function() {
-    if (percentageCleared < 75 && lives > 0) {
+    if (percentageCleared < 75 && lives >= 0 && timeLeft > 0) {
       var dx = s ? 1 : 0;
       var dy = s ? 0 : 1; 
       blue.each(function(d) { startWall(d, "blue", -dx, -dy); });
@@ -200,6 +220,17 @@ svg.append("text")
   .attr("fill", "white")
   .attr("id", "livesText")
   .text("Lives: " + lives)
+
+var gameStartedAt = new Date().getTime();
+var timeLeft = t;
+svg.append("text")
+  .attr("x", w - 130)
+  .attr("y", 15)
+  .attr("font-family", "sans-serif")
+  .attr("font-size", "12px")
+  .attr("fill", "white")
+  .attr("id", "timeLeftText")
+  .text("Time left: " + timeLeft)
 
 var force = d3.layout.force()
   .gravity(0)
@@ -278,10 +309,20 @@ force.on("tick", function () {
     fillEmptyRooms();
   }
   
-  if (percentageCleared < 75 && lives > 0) {
+  var timePlayed = Math.floor(((new Date().getTime()) - gameStartedAt) / 100);
+  timeLeft = timePlayed > t ? 0 : t - timePlayed;
+  svg.select("#timeLeftText")
+    .text("Time left: " + timeLeft);
+  if (percentageCleared < 75 && lives >= 0 && timeLeft > 0) {
     force.resume();
   } else {
     force.stop();
+    if (percentageCleared >= 75 && lives >= 0 && timeLeft > 0) {
+      d3.select("#nextLevelButton").style("visibility", "visible");
+    } else {
+      d3.select("#playAgainButton")
+        .style("visibility", "visible")
+    }
   }
 });
 
@@ -502,7 +543,7 @@ function fillEmptyRooms() {
     .classed("air", false)
     .each(function(d) { if (!d.isWall) { ++areaCleared; d.isWall = true; } });
   
-  percentageCleared = Math.round((areaCleared * 100) / totalArea);
+  percentageCleared = Math.floor((areaCleared * 100) / totalArea);
   svg.select("#areaFilledText")
     .text("Area cleared: " + percentageCleared + "%");
 }
