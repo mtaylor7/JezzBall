@@ -66,13 +66,22 @@ rect {
 <form><input id="switch" type="button" value="V" /></form>
 <script>
 
+
+d3.selection.prototype.size = function() {
+    var n = 0;
+    this.each(function() { ++n; });
+    return n;
+  };
+
+
+
 var w = 960,
     h = 500,
     sz = 20,
     r = sz / 2,
     sr = r * r,
     ssz = sz * sz,
-    v = 2,
+    v = 3,
     n = 3;
 
 var rows = Math.ceil(h / sz);
@@ -161,11 +170,36 @@ var cell = svg.selectAll(".cell")
     blue.classed("blue", false);
     red.classed("red", false);
   }).on("click", function() {
-    var dx = s ? 1 : 0;
-    var dy = s ? 0 : 1; 
-    blue.each(function(d) { startWall(d, "blue", -dx, -dy); });
-    red.each(function(d) { startWall(d, "red", dx, dy); });
+    if (percentageCleared < 75 && lives > 0) {
+      var dx = s ? 1 : 0;
+      var dy = s ? 0 : 1; 
+      blue.each(function(d) { startWall(d, "blue", -dx, -dy); });
+      red.each(function(d) { startWall(d, "red", dx, dy); });
+    }
   });
+
+var areaCleared = 0;
+var totalArea = svg.selectAll(".air").size();
+var percentageCleared = 0;
+
+svg.append("text")
+  .attr("x", w / 2 - 50)
+  .attr("y", h - 5)
+  .attr("font-family", "sans-serif")
+  .attr("font-size", "12px")
+  .attr("fill", "white")
+  .attr("id", "areaFilledText")
+  .text("Area cleared: 0%")
+
+var lives = n;
+svg.append("text")
+  .attr("x", 50)
+  .attr("y", 15)
+  .attr("font-family", "sans-serif")
+  .attr("font-size", "12px")
+  .attr("fill", "white")
+  .attr("id", "livesText")
+  .text("Lives: " + lives)
 
 var force = d3.layout.force()
   .gravity(0)
@@ -188,24 +222,8 @@ balls.forEach(function (b) {
 });
 
 force.on("tick", function () {
-  var tail = svg.selectAll(".tail");
-  var wall = svg.selectAll(".cell.wall");
-  var air = svg.selectAll(".cell.air");
-  var head = svg.selectAll(".head");
-  var ball = svg.selectAll(".ball");
-  
-  var wallWasBuilt = false;
-  
-  head.attr("x", function(d) { d.x += d.dx * (v * .8); return rectx(d); })
-    .attr("y", function(d) { d.y += d.dy * (v * .8); return recty(d); })
-    .each(function(d) {
-      svg.select("." + d.cl + ".tail")
-        .attr("x", tailx)
-        .attr("y", taily)
-        .attr("width", tailw)
-        .attr("height", tailh);
-    });
       
+  var ball = svg.selectAll(".ball");
   ball.attr("cx", function (d) { return d.x; })
     .attr("cy", function (d) { return d.y; })
     .each(function(b) {
@@ -227,6 +245,21 @@ force.on("tick", function () {
       detectCollisions(b);
   });
   
+  var wallWasBuilt = false;
+  var head = svg.selectAll(".head");
+  head.attr("x", function(d) { d.x += d.dx * (v * .6); return rectx(d); })
+    .attr("y", function(d) { d.y += d.dy * (v * .6); return recty(d); })
+    .each(function(d) {
+      svg.select("." + d.cl + ".tail")
+        .attr("x", tailx)
+        .attr("y", taily)
+        .attr("width", tailw)
+        .attr("height", tailh);
+    });
+  
+  var air = svg.selectAll(".cell.air");
+  var wall = svg.selectAll(".cell.wall");
+  var tail = svg.selectAll(".tail");
   head.filter(function(h) {
       return !wall.filter(function(w) { return h.dx == 0 ? h.x == w.x && Math.abs(h.y - w.y) < sz : h.y == w.y && Math.abs(h.x - w.x) < sz; }).empty();
     }).each(function(h) {
@@ -235,7 +268,7 @@ force.on("tick", function () {
         })
         .classed("air", false)
         .classed("wall", true)
-        .each(function(d) { d.isWall = true; });
+        .each(function(d) { if (!d.isWall) { ++areaCleared; d.isWall = true; } });
       tail.filter("." + h.cl)
         .remove();
       wallWasBuilt = true;
@@ -245,7 +278,11 @@ force.on("tick", function () {
     fillEmptyRooms();
   }
   
-  force.resume();
+  if (percentageCleared < 75 && lives > 0) {
+    force.resume();
+  } else {
+    force.stop();
+  }
 });
 
 force.start();
@@ -254,6 +291,25 @@ function detectCollisions(b) {
   var dx = b.x - b.px > 0 ? 1 : -1;
   var dy = b.y - b.py > 0 ? 1 : -1;
   var d, sd;
+
+  // tail collision
+  svg.selectAll(".tail").filter(function(t) {
+      var w = tailw(t);
+      var h = tailh(t);
+      var x0 = tailx(t);
+      var x1 = x0 + w;
+      var y0 = taily(t);
+      var y1 = y0 + h;
+      
+      return x0 - r < b.x && b.x < x1 - r && y0 - r < b.y && b.y < y1 + r;
+    })
+    .each(function(t) {
+        --lives;
+        svg.select("#livesText")
+            .text("Lives: " + (lives < 0 ? 0 : lives));
+        svg.selectAll(".head." + t.cl).remove();
+      })
+    .remove();
   
   // wall borders collision
   var cc = ballCell(b);
@@ -372,22 +428,6 @@ function detectCollisions(b) {
     }
   });
 
-  // tail collision
-  svg.selectAll(".tail").filter(function(t) {
-      var w = tailw(t);
-      var h = tailh(t);
-      var x0 = tailx(t);
-      var x1 = x0 + w;
-      var y0 = taily(t);
-      var y1 = y0 + h;
-      
-      return x0 - r < b.x && b.x < x1 - r && y0 - r < b.y && b.y < y1 + r;
-    })
-    .each(function(t) {
-        svg.selectAll(".head." + t.cl).remove();
-      })
-    .remove();
-
   // ball collision
   svg.selectAll(".ball").each(function(b2) {
       if (b.id == b2.id) {
@@ -460,7 +500,11 @@ function fillEmptyRooms() {
   d3.selectAll(".pending")
     .classed("wall", true)
     .classed("air", false)
-    .each(function(d) { d.isWall = true; });
+    .each(function(d) { if (!d.isWall) { ++areaCleared; d.isWall = true; } });
+  
+  percentageCleared = Math.round((areaCleared * 100) / totalArea);
+  svg.select("#areaFilledText")
+    .text("Area cleared: " + percentageCleared + "%");
 }
 
 function visit(cells, x, y) {
