@@ -599,15 +599,6 @@ function visit(c) {
     rc.visited = true;
     visit(rc);
   }
-/*  cells
-    .filter(function (d) {
-        return !d.visited && ((c.r == d.r && (c.c - 1 == d.c || d.c == c.c + 1)) || (c.c == d.c && (c.r - 1 == d.r || d.r == c.r + 1)));
-      })
-    .classed("pending", false)
-    .each(function (c) {
-        c.visited = true;
-        visit(cells, c);
-      });*/
 }
 
 function startWall(cell, cl, dx, dy) {
