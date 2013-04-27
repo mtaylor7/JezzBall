@@ -196,7 +196,7 @@ var blue, red;
 var cell = svg.selectAll(".cell")
   .data(cells)
   .enter().append("rect")
-  .attr("class", function(d) { return "cell " + ((d.isWall = d.x == r || d.x == w - r || d.y == r || d.y == h - r) ? "wall" : "air"); })
+  .attr("class", function(d) { return "cell " + ((d.isWall = d.c == 0 || d.c == cols - 1 || d.r == 0 || d.r == rows - 1) ? "wall" : "air"); })
   .attr("x", rectx)
   .attr("y", recty)
   .attr("width", sz)
