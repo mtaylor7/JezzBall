@@ -382,12 +382,12 @@ function detectCollisions(b) {
       var y0 = taily(t);
       var y1 = y0 + h;
       
-      return x0 - r < b.x && b.x < x1 - r && y0 - r < b.y && b.y < y1 + r;
+      return x0 - r <= b.x && b.x <= x1 - r && y0 - r <= b.y && b.y <= y1 + r;
     })
     .each(function(t) {
         --lives;
         svg.select("#livesText")
-            .text("Lives: " + (lives < 0 ? 0 : lives));
+          .text("Lives: " + (lives < 0 ? 0 : lives));
         svg.selectAll(".head." + t.cl).remove();
       })
     .remove();
