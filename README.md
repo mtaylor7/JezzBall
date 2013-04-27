@@ -1,0 +1,1 @@
+A clone of [JezzBall](http://en.wikipedia.org/wiki/JezzBall). Enjoy ! :)
