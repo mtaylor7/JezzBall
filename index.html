@@ -8,6 +8,34 @@ rect {
   pointer-events: all;
 }
 
+.smallTextStroke {
+  font-family: sans-serif;
+  font-size: 12px;
+  fill: none;
+  stroke: black;
+  stroke-width: 1px;
+}
+.smallText {
+  font-family: sans-serif;
+  font-size: 12px;
+  fill: white;
+}
+
+.bigTextStroke {
+  font-family: sans-serif;
+  font-size: 24px;
+  font-weight: bold;
+  fill: none;
+  stroke: black;
+  stroke-width: 4px;
+}
+.bigText {
+  font-family: sans-serif;
+  font-size: 24px;
+  font-weight: bold;
+  fill: white;
+}
+
 .cell {
 }
 
@@ -99,13 +127,15 @@ d3.select("#switchOrientationButton")
   .on("click", function(e) { s = !s; d3.select("#switchOrientationButton").attr("value", s ? "H" : "V"); });
 d3.select("#nextLevelButton")
   .style("position", "absolute")
-  .style("top", Math.round(h / 2 - 10) + "px")
+  .style("width", "100px")
+  .style("top", Math.round(h / 2 + 20) + "px")
   .style("left", Math.round(w / 2 - 50) + "px")
   .style("visibility", "hidden")
   .on("click", function(e) { window.location.href = "?level=" + (level + 1); });
 d3.select("#playAgainButton")
   .style("position", "absolute")
-  .style("top", Math.round(h / 2 - 10) + "px")
+  .style("width", "100px")
+  .style("top", Math.round(h / 2 + 20) + "px")
   .style("left", Math.round(w / 2 - 50) + "px")
   .style("visibility", "hidden")
   .on("click", function(e) { window.location.href = "?level=1"; });
@@ -205,9 +235,7 @@ var percentageCleared = 0;
 svg.append("text")
   .attr("x", w / 2 - 50)
   .attr("y", h - 5)
-  .attr("font-family", "sans-serif")
-  .attr("font-size", "12px")
-  .attr("fill", "white")
+  .attr("class", "smallText")
   .attr("id", "areaFilledText")
   .text("Area cleared: 0%")
 
@@ -215,9 +243,7 @@ var lives = n;
 svg.append("text")
   .attr("x", 50)
   .attr("y", 15)
-  .attr("font-family", "sans-serif")
-  .attr("font-size", "12px")
-  .attr("fill", "white")
+  .attr("class", "smallText")
   .attr("id", "livesText")
   .text("Lives: " + lives)
 
@@ -226,9 +252,7 @@ var timeLeft = t;
 svg.append("text")
   .attr("x", w - 130)
   .attr("y", 15)
-  .attr("font-family", "sans-serif")
-  .attr("font-size", "12px")
-  .attr("fill", "white")
+  .attr("class", "smallText")
   .attr("id", "timeLeftText")
   .text("Time left: " + timeLeft)
 
@@ -317,12 +341,28 @@ force.on("tick", function () {
     force.resume();
   } else {
     force.stop();
+    var text, textWidth;
     if (percentageCleared >= 75 && lives >= 0 && timeLeft > 0) {
-      d3.select("#nextLevelButton").style("visibility", "visible");
+      text = "Level complete !";
+      textWidth = 188;
+      d3.select("#nextLevelButton")
+        .style("visibility", "visible");
     } else {
+      text = "Game over !";
+      textWidth = 138;
       d3.select("#playAgainButton")
         .style("visibility", "visible")
     }
+    svg.append("text")
+      .attr("x", w / 2 - textWidth / 2)
+      .attr("y", h / 2)
+      .attr("class", "bigTextStroke")
+      .text(text);
+    svg.append("text")
+      .attr("x", w / 2 - textWidth / 2)
+      .attr("y", h / 2)
+      .attr("class", "bigText")
+      .text(text);
   }
 });
 
