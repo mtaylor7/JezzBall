@@ -102,13 +102,13 @@ d3.select("#nextLevelButton")
   .style("top", Math.round(h / 2 - 10) + "px")
   .style("left", Math.round(w / 2 - 50) + "px")
   .style("visibility", "hidden")
-  .on("click", function(e) { window.location.href = "test2.html?level=" + (level + 1); });
+  .on("click", function(e) { window.location.href = "?level=" + (level + 1); });
 d3.select("#playAgainButton")
   .style("position", "absolute")
   .style("top", Math.round(h / 2 - 10) + "px")
   .style("left", Math.round(w / 2 - 50) + "px")
   .style("visibility", "hidden")
-  .on("click", function(e) { window.location.href = "test2.html"; });
+  .on("click", function(e) { window.location.href = "?level=1"; });
 
 var cells = d3.range(0, rows * cols).map(function (d) {
   var col = d % cols;
