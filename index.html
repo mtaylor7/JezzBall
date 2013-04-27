@@ -321,8 +321,8 @@ force.on("tick", function () {
       air.filter(function(a) {
           return h.dx == 0 ? h.x == a.x && Math.min(h.sy, h.y) <= a.y && a.y <= Math.max(h.sy, h.y) : h.y == a.y && Math.min(h.sx, h.x) <= a.x && a.x <= Math.max(h.sx, h.x);
         })
-        .classed("air", false)
         .classed("wall", true)
+        .classed("air", false)
         .each(function(d) { if (!d.isWall) { ++areaCleared; d.isWall = true; } });
       tail.filter("." + h.cl)
         .remove();
@@ -561,43 +561,53 @@ function fillEmptyRooms() {
       d.visited = false;
     });
   
-  var pending = d3.selectAll(".cell.air")
-    .classed("pending", true);
-  
   svg.selectAll(".ball")
     .each(function (b) {
       var cc = ballCell(b);
-      pending
-        .filter(function (c) {
-            return cc.r == c.r && cc.c == c.c;
-          })
-        .classed("pending", false)
-        .each(function (c) {
-            c.visited = true;
-            visit(pending, c.x, c.y);
-          });
+      cc.visited = true;
+      visit(cc);
     });
   
-  d3.selectAll(".pending")
-    .classed("wall", true)
-    .classed("air", false)
-    .each(function(d) { if (!d.isWall) { ++areaCleared; d.isWall = true; } });
+  d3.selectAll(".cell.air")
+    .classed("wall", function(d) { return !d.visited; })
+    .classed("air", function(d) { return d.visited; })
+    .each(function(d) { if (!d.visited && !d.isWall) { ++areaCleared; d.isWall = true; } });
   
   percentageCleared = Math.floor((areaCleared * 100) / totalArea);
   svg.select("#areaFilledText")
     .text("Area cleared: " + percentageCleared + "%");
 }
 
-function visit(cells, x, y) {
-  cells
+function visit(c) {
+  var tc = topCell(c);
+  if (!tc.isWall && !tc.visited) {
+    tc.visited = true;
+    visit(tc);
+  }
+  var lc = leftCell(c);
+  if (!lc.isWall && !lc.visited) {
+    lc.visited = true;
+    visit(lc);
+  }
+  var bc = bottomCell(c);
+  if (!bc.isWall && !bc.visited) {
+    bc.visited = true;
+    visit(bc);
+  }
+  var rc = rightCell(c);
+  if (!rc.isWall && !rc.visited) {
+    rc.visited = true;
+    visit(rc);
+  }
+/*  cells
     .filter(function (d) {
-        return !d.visited && ((y == d.y && (x - sz == d.x || d.x == x + sz)) || (x == d.x && (y - sz == d.y || d.y == y + sz)));
+        return !d.visited && ((c.r == d.r && (c.c - 1 == d.c || d.c == c.c + 1)) || (c.c == d.c && (c.r - 1 == d.r || d.r == c.r + 1)));
       })
     .classed("pending", false)
     .each(function (c) {
         c.visited = true;
-        visit(cells, c.x, c.y);
-      });
+        visit(cells, c);
+      });*/
 }
 
 function startWall(cell, cl, dx, dy) {
