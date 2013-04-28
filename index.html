@@ -3,6 +3,11 @@
 <title>D3 JezzBall</title>
 <style>
 
+body {
+  padding: 0px;
+  margin: 0px;
+}
+
 rect {
   fill: none;
   pointer-events: all;
@@ -83,11 +88,20 @@ rect {
   fill-opacity: .4;
 }
 
+.switch {
+  position: absolute;
+  padding: 0px;
+  width: 20px;
+  height: 20px;
+}
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <form>
-  <input id="switchOrientationButton" type="button" value="V" />
+  <input id="switchOrientationButton1" class="switch" type="button" value="V" />
+  <input id="switchOrientationButton2" class="switch" type="button" value="V" />
+  <input id="switchOrientationButton3" class="switch" type="button" value="V" />
+  <input id="switchOrientationButton4" class="switch" type="button" value="V" />
   <input id="nextLevelButton" type="button" value="Next level" />
   <input id="playAgainButton" type="button" value="Play again" />
 </form>
@@ -121,11 +135,20 @@ var rows = Math.ceil(h / sz);
 var cols = Math.ceil(w / sz);
 
 var s = false;
-d3.select("#switchOrientationButton")
-  .style("position", "absolute")
+d3.selectAll(".switch")
+  .on("click", function(e) { s = !s; d3.selectAll(".switch").attr("value", s ? "H" : "V"); });
+d3.select("#switchOrientationButton1")
   .style("top", "0px")
-  .style("left", "0px")
-  .on("click", function(e) { s = !s; d3.select("#switchOrientationButton").attr("value", s ? "H" : "V"); });
+  .style("left", "0px");
+d3.select("#switchOrientationButton2")
+  .style("top", "0px")
+  .style("left", (w - 20) + "px");
+d3.select("#switchOrientationButton3")
+  .style("top", (h - 20) + "px")
+  .style("left", "0px");
+d3.select("#switchOrientationButton4")
+  .style("top", (h - 20) + "px")
+  .style("left", (w - 20) + "px");
 d3.select("#nextLevelButton")
   .style("position", "absolute")
   .style("width", "100px")
