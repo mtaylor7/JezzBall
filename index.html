@@ -192,6 +192,29 @@ var svg = d3.select("body").append("svg")
     .attr("width", w)
     .attr("height", h);
 
+var zoom = d3.behavior.zoom().on("zoom", function(e) {
+  s = !s;
+  d3.selectAll(".switch").attr("value", s ? "H" : "V");
+  if (blue) blue.classed("blue", false);
+  if (red) red.classed("red", false);
+  var p = d3.mouse(this);
+  var c1 = ballCell({x: p[0], y: p[1]});
+  var dx = s ? (p[0] - c1.x > 0 ? 1 : -1) : 0;
+  var dy = s ? 0 : (p[1] - c1.y > 0 ? 1 : -1); 
+  var a = svg.selectAll(".cell").filter(function(c2) { return c2.r == c1.r && c2.c == c1.c; });
+  var b = svg.selectAll(".cell").filter(function(c2) { return c2.r == c1.r + dy && c2.c == c1.c + dx; });
+  if (dx + dy > 0) {
+    blue = a;
+    red = b;
+  } else {
+    blue = b;
+    red = a;
+  }
+  blue.classed("blue", true);
+  red.classed("red", true);
+});
+svg.call(zoom);
+
 var rectx = function(d) { return d.x - r; };
 var recty = function(d) { return d.y - r; };
 
@@ -230,7 +253,7 @@ var cell = svg.selectAll(".cell")
     var dx = s ? (p[0] - c1.x > 0 ? 1 : -1) : 0;
     var dy = s ? 0 : (p[1] - c1.y > 0 ? 1 : -1); 
     var a = d3.select(this);
-    var b = svg.selectAll(".cell").filter(function(c2) { return c2.x == c1.x + sz * dx && c2.y == c1.y + sz * dy; });
+    var b = svg.selectAll(".cell").filter(function(c2) { return c2.r == c1.r + dy && c2.c == c1.c + dx; });
     if (dx + dy > 0) {
       blue = a;
       red = b;
