@@ -192,7 +192,7 @@ var svg = d3.select("body").append("svg")
     .attr("width", w)
     .attr("height", h);
 
-var zoom = d3.behavior.zoom().on("zoom", function(e) {
+var mousewheel = function(e) {
   s = !s;
   d3.selectAll(".switch").attr("value", s ? "H" : "V");
   if (blue) blue.classed("blue", false);
@@ -212,8 +212,9 @@ var zoom = d3.behavior.zoom().on("zoom", function(e) {
   }
   blue.classed("blue", true);
   red.classed("red", true);
-});
-svg.call(zoom);
+};
+svg.on("mousewheel.zoom", mousewheel)
+  .on("DOMMouseScroll.zoom", mousewheel);
 
 var rectx = function(d) { return d.x - r; };
 var recty = function(d) { return d.y - r; };
