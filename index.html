@@ -212,6 +212,7 @@ var mousewheel = function(e) {
   }
   blue.classed("blue", true);
   red.classed("red", true);
+  d3.event.preventDefault();
 };
 svg.on("mousewheel.zoom", mousewheel)
   .on("DOMMouseScroll.zoom", mousewheel);
