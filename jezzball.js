@@ -512,6 +512,7 @@ function fillEmptyRooms() {
   svg.selectAll(".wall")
     .on("mouseover", null)
     .on("mouseout", null)
+    .on("click", null)
     .classed("blue", false)
     .classed("red", false);
 }
