@@ -245,10 +245,25 @@ force.on("tick", function () {
     });
   
   var air = svg.selectAll(".air");
-  var wall = svg.selectAll(".wall");
   var tail = svg.selectAll(".tail");
   head.filter(function(h) {
-      return !wall.filter(function(w) { return h.dx == 0 ? h.x == w.x && Math.abs(h.y - w.y) < sz : h.y == w.y && Math.abs(h.x - w.x) < sz; }).empty();
+      var hc = ballCell(h);
+      if (h.dy < 0) {
+        var tc = topCell(hc);
+        return tc.isWall && h.y - tc.y < sz;
+      }
+      if (h.dx < 0) {
+        var lc = leftCell(hc);
+        return lc.isWall && h.x - lc.x < sz;
+      }
+      if (h.dy > 0) {
+        var bc = bottomCell(hc);
+        return bc.isWall && bc.y - h.y < sz;
+      }
+      if (h.dx > 0) {
+        var rc = rightCell(hc);
+        return rc.isWall && rc.x - h.x < sz;
+      }
     }).each(function(h) {
       air.filter(function(a) {
           return h.dx == 0 ? h.x == a.x && Math.min(h.sy, h.y) <= a.y && a.y <= Math.max(h.sy, h.y) : h.y == a.y && Math.min(h.sx, h.x) <= a.x && a.x <= Math.max(h.sx, h.x);
