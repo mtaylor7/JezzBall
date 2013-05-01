@@ -112,15 +112,15 @@ var ballCell = function(b) {
   return cells[row * cols + col];
 };
 
-var topCell = function(c) { return cells[(c.r - 1) * cols + c.c]; };
-var leftCell = function(c) { return cells[c.r * cols + c.c - 1]; };
-var bottomCell = function(c) { return cells[(c.r + 1) * cols + c.c]; };
-var rightCell = function(c) { return cells[c.r * cols + c.c + 1]; };
+var topCell = function(c) { return cells[Math.max(0, c.r - 1) * cols + c.c]; };
+var leftCell = function(c) { return cells[c.r * cols + Math.max(0, c.c - 1)]; };
+var bottomCell = function(c) { return cells[Math.min(rows - 1, c.r + 1) * cols + c.c]; };
+var rightCell = function(c) { return cells[c.r * cols + Math.min(cols - 1, c.c + 1)]; };
 
-var topLeftCell = function(c) { return cells[(c.r - 1) * cols + c.c - 1]; };
-var bottomLeftCell = function(c) { return cells[(c.r + 1) * cols + c.c - 1]; };
-var bottomRightCell = function(c) { return cells[(c.r + 1) * cols + c.c + 1]; };
-var topRightCell = function(c) { return cells[(c.r - 1) * cols + c.c + 1]; };
+var topLeftCell = function(c) { return cells[Math.max(0, c.r - 1) * cols + Math.max(0, c.c - 1)]; };
+var bottomLeftCell = function(c) { return cells[Math.min(rows - 1, c.r + 1) * cols + Math.max(0, c.c - 1)]; };
+var bottomRightCell = function(c) { return cells[Math.min(rows - 1, c.r + 1) * cols + Math.min(cols - 1, c.c + 1)]; };
+var topRightCell = function(c) { return cells[Math.max(0, c.r - 1) * cols + Math.min(cols - 1, c.c + 1)]; };
 
 var blue, red;
 var cell = svg.selectAll(".cell")
@@ -212,6 +212,8 @@ force.on("tick", function () {
   ball.attr("cx", function (d) { return d.x; })
     .attr("cy", function (d) { return d.y; })
     .each(function(b) {
+      detectCollisions(b);
+      
       var cc = ballCell(b);
       var tc = topCell(cc);
       var lc = leftCell(cc);
@@ -226,8 +228,6 @@ force.on("tick", function () {
         b.py = b.y = cc.y;
         cc.isWall = b.isMoving = false;
       }
-      
-      detectCollisions(b);
   });
   
   var wallWasBuilt = false;
