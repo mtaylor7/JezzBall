@@ -32,7 +32,7 @@ d3.selectAll(".switch")
 d3.select("#switchOrientationButton2")
   .style("left", (w - 20) + "px");
 d3.select("#switchOrientationButton3")
-  .style("top", (h - 20) + "px")
+  .style("top", (h - 20) + "px");
 d3.select("#switchOrientationButton4")
   .style("top", (h - 20) + "px")
   .style("left", (w - 20) + "px");
@@ -167,7 +167,7 @@ svg.append("text")
   .attr("y", h - 5)
   .attr("class", "smallText")
   .attr("id", "areaFilledText")
-  .text("Area cleared: 0%")
+  .text("Area cleared: 0%");
 
 var lives = n;
 svg.append("text")
@@ -175,7 +175,7 @@ svg.append("text")
   .attr("y", 15)
   .attr("class", "smallText")
   .attr("id", "livesText")
-  .text("Lives: " + lives)
+  .text("Lives: " + lives);
 
 var gameStartedAt = new Date().getTime();
 var timeLeft = t;
@@ -184,7 +184,7 @@ svg.append("text")
   .attr("y", 15)
   .attr("class", "smallText")
   .attr("id", "timeLeftText")
-  .text("Time left: " + timeLeft)
+  .text("Time left: " + timeLeft);
 
 var force = d3.layout.force()
   .gravity(0)
@@ -281,7 +281,7 @@ force.on("tick", function () {
       text = "Game over !";
       textWidth = 138;
       d3.select("#playAgainButton")
-        .style("visibility", "visible")
+        .style("visibility", "visible");
     }
     svg.append("text")
       .attr("x", w / 2 - textWidth / 2)
