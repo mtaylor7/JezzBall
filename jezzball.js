@@ -1,3 +1,5 @@
+
+
 d3.selection.prototype.size = function() {
     var n = 0;
     this.each(function() { ++n; });
@@ -27,31 +29,20 @@ var cols = Math.ceil(w / sz);
 var s = false;
 d3.selectAll(".switch")
   .on("click", function(e) { s = !s; d3.selectAll(".switch").attr("value", s ? "H" : "V"); });
-d3.select("#switchOrientationButton1")
-  .style("top", "0px")
-  .style("left", "0px");
 d3.select("#switchOrientationButton2")
-  .style("top", "0px")
   .style("left", (w - 20) + "px");
 d3.select("#switchOrientationButton3")
   .style("top", (h - 20) + "px")
-  .style("left", "0px");
 d3.select("#switchOrientationButton4")
   .style("top", (h - 20) + "px")
   .style("left", (w - 20) + "px");
 d3.select("#nextLevelButton")
-  .style("position", "absolute")
-  .style("width", "100px")
   .style("top", Math.round(h / 2 + 20) + "px")
   .style("left", Math.round(w / 2 - 50) + "px")
-  .style("visibility", "hidden")
   .on("click", function(e) { window.location.href = "?level=" + (level + 1); });
 d3.select("#playAgainButton")
-  .style("position", "absolute")
-  .style("width", "100px")
   .style("top", Math.round(h / 2 + 20) + "px")
   .style("left", Math.round(w / 2 - 50) + "px")
-  .style("visibility", "hidden")
   .on("click", function(e) { window.location.href = "?level=1"; });
 
 var cells = d3.range(0, rows * cols).map(function (d) {

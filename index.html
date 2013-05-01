@@ -34,6 +34,7 @@ rect {
   stroke: black;
   stroke-width: 4px;
 }
+
 .bigText {
   font-family: sans-serif;
   font-size: 24px;
@@ -90,10 +91,19 @@ rect {
 
 .switch {
   position: absolute;
+  top: 0px;
+  left: 0px;
   padding: 0px;
   width: 20px;
   height: 20px;
 }
+
+#nextLevelButton, #playAgainButton {
+  position: absolute;
+  width: 100px;
+  visibility: hidden;
+}
+
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
