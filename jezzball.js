@@ -82,8 +82,8 @@ var mousewheel = function(e) {
   var c1 = ballCell({x: p[0], y: p[1]});
   var dx = s ? (p[0] - c1.x > 0 ? 1 : -1) : 0;
   var dy = s ? 0 : (p[1] - c1.y > 0 ? 1 : -1); 
-  var a = svg.selectAll(".cell").filter(function(c2) { return c2.r == c1.r && c2.c == c1.c; });
-  var b = svg.selectAll(".cell").filter(function(c2) { return c2.r == c1.r + dy && c2.c == c1.c + dx; });
+  var a = svg.selectAll(".air").filter(function(c2) { return c2.r == c1.r && c2.c == c1.c; });
+  var b = svg.selectAll(".air").filter(function(c2) { return c2.r == c1.r + dy && c2.c == c1.c + dx; });
   if (dx + dy > 0) {
     blue = a;
     red = b;
@@ -122,7 +122,6 @@ var bottomLeftCell = function(c) { return cells[Math.min(rows - 1, c.r + 1) * co
 var bottomRightCell = function(c) { return cells[Math.min(rows - 1, c.r + 1) * cols + Math.min(cols - 1, c.c + 1)]; };
 var topRightCell = function(c) { return cells[Math.max(0, c.r - 1) * cols + Math.min(cols - 1, c.c + 1)]; };
 
-var blue, red;
 var cell = svg.selectAll(".cell")
   .data(cells)
   .enter().append("rect")
@@ -130,13 +129,16 @@ var cell = svg.selectAll(".cell")
   .attr("x", rectx)
   .attr("y", recty)
   .attr("width", sz)
-  .attr("height", sz)
+  .attr("height", sz);
+
+var blue, red;
+svg.selectAll(".air")
   .on("mouseover", function(c1) {
     var p = d3.mouse(this);
     var dx = s ? (p[0] - c1.x > 0 ? 1 : -1) : 0;
     var dy = s ? 0 : (p[1] - c1.y > 0 ? 1 : -1); 
     var a = d3.select(this);
-    var b = svg.selectAll(".cell").filter(function(c2) { return c2.r == c1.r + dy && c2.c == c1.c + dx; });
+    var b = svg.selectAll(".air").filter(function(c2) { return c2.r == c1.r + dy && c2.c == c1.c + dx; });
     if (dx + dy > 0) {
       blue = a;
       red = b;
@@ -242,8 +244,8 @@ force.on("tick", function () {
         .attr("height", tailh);
     });
   
-  var air = svg.selectAll(".cell.air");
-  var wall = svg.selectAll(".cell.wall");
+  var air = svg.selectAll(".air");
+  var wall = svg.selectAll(".wall");
   var tail = svg.selectAll(".tail");
   head.filter(function(h) {
       return !wall.filter(function(w) { return h.dx == 0 ? h.x == w.x && Math.abs(h.y - w.y) < sz : h.y == w.y && Math.abs(h.x - w.x) < sz; }).empty();
@@ -486,7 +488,7 @@ function cornerSquareDistance(x0, y0, x1, y1) {
 }
 
 function fillEmptyRooms() {
-  d3.selectAll(".cell.air")
+  d3.selectAll(".air")
     .each(function (d) {
       d.visited = false;
     });
@@ -498,7 +500,7 @@ function fillEmptyRooms() {
       visit(cc);
     });
   
-  d3.selectAll(".cell.air")
+  d3.selectAll(".air")
     .classed("wall", function(d) { return !d.visited; })
     .classed("air", function(d) { return d.visited; })
     .each(function(d) { if (!d.visited && !d.isWall) { ++areaCleared; d.isWall = true; } });
@@ -506,6 +508,12 @@ function fillEmptyRooms() {
   percentageCleared = Math.floor((areaCleared * 100) / totalArea);
   svg.select("#areaFilledText")
     .text("Area cleared: " + percentageCleared + "%");
+  
+  svg.selectAll(".wall")
+    .on("mouseover", null)
+    .on("mouseout", null)
+    .classed("blue", false)
+    .classed("red", false);
 }
 
 function visit(c) {
