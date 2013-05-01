@@ -232,7 +232,6 @@ force.on("tick", function () {
       }
   });
   
-  var wallWasBuilt = false;
   var head = svg.selectAll(".head");
   head.attr("x", function(d) { d.x += d.dx * (v * .6); return rectx(d); })
     .attr("y", function(d) { d.y += d.dy * (v * .6); return recty(d); })
@@ -246,6 +245,7 @@ force.on("tick", function () {
   
   var air = svg.selectAll(".air");
   var tail = svg.selectAll(".tail");
+  var wallWasBuilt = false;
   head.filter(function(h) {
       var hc = ballCell(h);
       if (h.dy < 0) {
@@ -268,7 +268,7 @@ force.on("tick", function () {
       air.filter(function(a) {
           return h.dx == 0 ? h.x == a.x && Math.min(h.sy, h.y) <= a.y && a.y <= Math.max(h.sy, h.y) : h.y == a.y && Math.min(h.sx, h.x) <= a.x && a.x <= Math.max(h.sx, h.x);
         })
-        .classed("wall", true)
+        .classed("newWall", true)
         .classed("air", false)
         .each(function(d) { if (!d.isWall) { ++areaCleared; d.isWall = true; } });
       tail.filter("." + h.cl)
@@ -503,7 +503,9 @@ function cornerSquareDistance(x0, y0, x1, y1) {
 }
 
 function fillEmptyRooms() {
-  d3.selectAll(".air")
+  var air = d3.selectAll(".air");
+  
+  air
     .each(function (d) {
       d.visited = false;
     });
@@ -515,8 +517,8 @@ function fillEmptyRooms() {
       visit(cc);
     });
   
-  d3.selectAll(".air")
-    .classed("wall", function(d) { return !d.visited; })
+  air
+    .classed("newWall", function(d) { return !d.visited; })
     .classed("air", function(d) { return d.visited; })
     .each(function(d) { if (!d.visited && !d.isWall) { ++areaCleared; d.isWall = true; } });
   
@@ -524,10 +526,11 @@ function fillEmptyRooms() {
   svg.select("#areaFilledText")
     .text("Area cleared: " + percentageCleared + "%");
   
-  svg.selectAll(".wall")
+  svg.selectAll(".newWall")
     .on("mouseover", null)
     .on("mouseout", null)
     .on("click", null)
+    .classed("wall", true)
     .classed("blue", false)
     .classed("red", false);
 }
