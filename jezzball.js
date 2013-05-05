@@ -131,17 +131,18 @@ function previewLocation(c1, p) {
     d = p[1] - c1.y;
     c2 = d > 0 ? bottomCell(c1) : topCell(c1);
   }
-  var a = c1.elnt;
-  var b = c2.elnt;
-  if (d > 0) {
-    blue = a;
-    red = b;
+  if (c1.isWall || c2.isWall) {
+    blue = null;
+    red = null;
+  } else if (d > 0) {
+    blue = c1.elnt;
+    red = c2.elnt;
   } else {
-    blue = b;
-    red = a;
+    blue = c2.elnt;
+    red = c1.elnt;
   }
-  blue.classed("blue", true);
-  red.classed("red", true);
+  if (blue) blue.classed("blue", function(d) { return !d.isWall; });
+  if (red) red.classed("red", function(d) { return !d.isWall; });
 }
 
 var blue, red;
@@ -150,14 +151,14 @@ svg.selectAll(".air")
     var p = d3.mouse(this);
     previewLocation(c1, p);
   }).on("mouseout", function(c1) {
-    blue.classed("blue", false);
-    red.classed("red", false);
+    if (blue) blue.classed("blue", false);
+    if (red) red.classed("red", false);
   }).on("click", function() {
     if (percentageCleared < 75 && lives >= 0 && timeLeft > 0) {
       var dx = s ? 1 : 0;
       var dy = s ? 0 : 1; 
-      blue.each(function(d) { startWall(d, "blue", -dx, -dy); });
-      red.each(function(d) { startWall(d, "red", dx, dy); });
+      if (blue) blue.each(function(d) { startWall(d, "blue", -dx, -dy); });
+      if (red) red.each(function(d) { startWall(d, "red", dx, dy); });
     }
   });
 
