@@ -76,23 +76,9 @@ var svg = d3.select("body").append("svg")
 var mousewheel = function(e) {
   s = !s;
   d3.selectAll(".switch").attr("value", s ? "H" : "V");
-  if (blue) blue.classed("blue", false);
-  if (red) red.classed("red", false);
   var p = d3.mouse(this);
   var c1 = ballCell({x: p[0], y: p[1]});
-  var dx = s ? (p[0] - c1.x > 0 ? 1 : -1) : 0;
-  var dy = s ? 0 : (p[1] - c1.y > 0 ? 1 : -1); 
-  var a = svg.selectAll(".air").filter(function(c2) { return c2.r == c1.r && c2.c == c1.c; });
-  var b = svg.selectAll(".air").filter(function(c2) { return c2.r == c1.r + dy && c2.c == c1.c + dx; });
-  if (dx + dy > 0) {
-    blue = a;
-    red = b;
-  } else {
-    blue = b;
-    red = a;
-  }
-  blue.classed("blue", true);
-  red.classed("red", true);
+  previewLocation(c1, p);
   d3.event.preventDefault();
 };
 svg.on("mousewheel.zoom", mousewheel)
@@ -129,25 +115,40 @@ var cell = svg.selectAll(".cell")
   .attr("x", rectx)
   .attr("y", recty)
   .attr("width", sz)
-  .attr("height", sz);
+  .attr("height", sz)
+  .each(function(d) {
+    d.elnt = d3.select(this);
+  });
+
+function previewLocation(c1, p) {
+  if (blue) blue.classed("blue", false);
+  if (red) red.classed("red", false);
+  var c2, d;
+  if (s) {
+    d = p[0] - c1.x;
+    c2 = d > 0 ? rightCell(c1) : leftCell(c1);
+  } else {
+    d = p[1] - c1.y;
+    c2 = d > 0 ? bottomCell(c1) : topCell(c1);
+  }
+  var a = c1.elnt;
+  var b = c2.elnt;
+  if (d > 0) {
+    blue = a;
+    red = b;
+  } else {
+    blue = b;
+    red = a;
+  }
+  blue.classed("blue", true);
+  red.classed("red", true);
+}
 
 var blue, red;
 svg.selectAll(".air")
   .on("mouseover", function(c1) {
     var p = d3.mouse(this);
-    var dx = s ? (p[0] - c1.x > 0 ? 1 : -1) : 0;
-    var dy = s ? 0 : (p[1] - c1.y > 0 ? 1 : -1); 
-    var a = d3.select(this);
-    var b = svg.selectAll(".air").filter(function(c2) { return c2.r == c1.r + dy && c2.c == c1.c + dx; });
-    if (dx + dy > 0) {
-      blue = a;
-      red = b;
-    } else {
-      blue = b;
-      red = a;
-    }
-    blue.classed("blue", true);
-    red.classed("red", true);
+    previewLocation(c1, p);
   }).on("mouseout", function(c1) {
     blue.classed("blue", false);
     red.classed("red", false);
@@ -233,8 +234,8 @@ force.on("tick", function () {
   });
   
   var head = svg.selectAll(".head");
-  head.attr("x", function(d) { d.x += d.dx * (v * .6); return rectx(d); })
-    .attr("y", function(d) { d.y += d.dy * (v * .6); return recty(d); })
+  head.attr("x", function(d) { d.x += d.dx * (v * .4); return rectx(d); })
+    .attr("y", function(d) { d.y += d.dy * (v * .4); return recty(d); })
     .each(function(d) {
       svg.select("." + d.cl + ".tail")
         .attr("x", tailx)
@@ -329,7 +330,7 @@ function detectCollisions(b) {
       var y0 = taily(t);
       var y1 = y0 + h;
       
-      return x0 - r <= b.x && b.x <= x1 - r && y0 - r <= b.y && b.y <= y1 + r;
+      return x0 - r < b.x && b.x < x1 - r && y0 - r < b.y && b.y < y1 + r;
     })
     .each(function(t) {
         --lives;
