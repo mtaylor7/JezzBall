@@ -146,11 +146,12 @@ function previewLocation(c1, p) {
 }
 
 var blue, red;
-svg.selectAll(".air")
-  .on("mouseover", function(c1) {
+svg
+  .on("mouseover", function() {
     var p = d3.mouse(this);
+    var c1 = ballCell({x: p[0], y: p[1]});
     previewLocation(c1, p);
-  }).on("mouseout", function(c1) {
+  }).on("mouseout", function() {
     if (blue) blue.classed("blue", false);
     if (red) red.classed("red", false);
   }).on("click", function() {
