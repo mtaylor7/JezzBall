@@ -223,8 +223,7 @@ force.on("tick", function () {
       var bc = bottomCell(cc);
       var rc = rightCell(cc);
       if (cc.isWall || (tc.isWall && bc.isWall) || (lc.isWall && rc.isWall)) {
-        svg.selectAll(".cell")
-          .filter(function(d) { return d.r == cc.r && d.c == cc.c; })
+        cc.elnt
           .classed("air", true)
           .classed("wall", false);
         b.px = b.x = cc.x;
